@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/horn_json_v2_with_scoped_assumptions.schema.json",
+  "title": "Horn Rules + Condition Dictionary Updates (scoped assumptions)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "fragment_id",
+    "language",
+    "condition_dictionary",
+    "rules",
+    "new_conditions",
+    "derived_predicates"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "horn_json_v2_with_scoped_assumptions"
+    },
+    "fragment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "type": "string",
+      "enum": ["pl"]
+    },
+    "condition_dictionary": {
+      "type": "object",
+      "description": "Input condition dictionary: map ConditionId -> condition definition (as stored previously).",
+      "additionalProperties": { "$ref": "#/$defs/ConditionDefinition" }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "$ref": "#/$defs/Rule" }
+    },
+    "new_conditions": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "$ref": "#/$defs/NewConditionDefinition" }
+    },
+    "derived_predicates": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "$ref": "#/$defs/DerivedPredicate" }
+    },
+    "assumptions": {
+      "type": "array",
+      "description": "Global assumptions; avoid if possible. Prefer scoped assumptions in rules/conditions.",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "PredicateArity": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*\\/[1-9][0-9]*$",
+      "description": "Predicate name with arity, e.g. delivery_status/2"
+    },
+    "Atom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pred", "args"],
+      "properties": {
+        "pred": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Predicate name without arity, e.g. delivery_status"
+        },
+        "args": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Variables start with '?', constants do not."
+          }
+        },
+        "negated": {
+          "type": "boolean",
+          "description": "If true, this atom is interpreted as stratified NAF negation.",
+          "default": false
+        }
+      }
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit", "quote"],
+      "properties": {
+        "unit": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Document unit identifiers (e.g. ['3.1(b)'], ['e'])."
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400,
+          "description": "Short verbatim excerpt (no paraphrase)."
+        }
+      }
+    },
+    "AssumptionType": {
+      "type": "string",
+      "enum": [
+        "data_contract",
+        "data_semantics",
+        "enumeration",
+        "closed_world",
+        "external_computation",
+        "conflict_resolution",
+        "missing_predicate"
+      ]
+    },
+    "AssumptionAbout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pred"],
+      "properties": {
+        "pred": { "$ref": "#/$defs/PredicateArity" },
+        "atom_index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0-based index into the rule body atoms; optional for condition-level assumptions."
+        },
+        "arg_index": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based index into the atom's argument list."
+        },
+        "const": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Constant value the assumption is about (optional)."
+        }
+      }
+    },
+    "ScopedAssumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["about", "type", "text"],
+      "properties": {
+        "about": { "$ref": "#/$defs/AssumptionAbout" },
+        "type": { "$ref": "#/$defs/AssumptionType" },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "Rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "head", "body", "constraints", "provenance", "assumptions"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_\\-]*$",
+          "minLength": 1
+        },
+        "head": { "$ref": "#/$defs/Atom" },
+        "body": {
+          "type": "array",
+          "minItems": 0,
+          "items": { "$ref": "#/$defs/Atom" }
+        },
+        "constraints": {
+          "type": "array",
+          "description": "Optional non-Horn constraints; prefer empty for executable Horn.",
+          "items": { "type": "string" }
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ScopedAssumption" }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "ConditionDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "meaning_pl", "required_facts", "optional_facts", "provenance", "assumptions"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "minLength": 1
+        },
+        "meaning_pl": { "type": "string", "minLength": 1 },
+        "required_facts": {
+          "type": "array",
+          "minItems": 0,
+          "items": { "$ref": "#/$defs/Atom" }
+        },
+        "optional_facts": {
+          "type": "array",
+          "minItems": 0,
+          "items": { "$ref": "#/$defs/Atom" }
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ScopedAssumption" }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "NewConditionDefinition": {
+      "allOf": [
+        { "$ref": "#/$defs/ConditionDefinition" }
+      ],
+      "description": "Condition definitions that are not present in input condition_dictionary and should be added."
+    },
+    "DerivedPredicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pred", "meaning"],
+      "properties": {
+        "pred": { "$ref": "#/$defs/PredicateArity" },
+        "meaning": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
