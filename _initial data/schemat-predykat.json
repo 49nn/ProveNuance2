@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/predicates_manifest.schema.json",
+  "title": "Predicates manifest (allowed + input/output classification)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "predicates"],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "predicates_manifest_v1"
+    },
+    "predicates": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/PredicateSpec" }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "whitelist_mode": {
+          "type": "string",
+          "enum": ["allow_only_listed", "allow_unlisted"],
+          "default": "allow_only_listed",
+          "description": "Whether rule generation/validation is restricted to listed predicates."
+        },
+        "naf_closed_world_predicates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PredicateArity" },
+          "description": "Predicates for which NAF (negated=true) is interpreted under closed-world assumption."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "PredicateArity": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*\\/[1-9][0-9]*$",
+      "description": "Predicate name with arity, e.g. delivery_status/2"
+    },
+    "ArgType": {
+      "type": "string",
+      "enum": [
+        "entity",
+        "user",
+        "account",
+        "offer",
+        "item",
+        "product",
+        "transaction",
+        "payment",
+        "delivery",
+        "bid",
+        "fee_event",
+        "complaint",
+        "appeal",
+        "discussion",
+        "rating",
+        "marketplace",
+        "string",
+        "int",
+        "decimal",
+        "bool",
+        "time",
+        "enum",
+        "any"
+      ]
+    },
+    "PredicateIO": {
+      "type": "string",
+      "enum": ["input", "derived", "both"],
+      "description": "input: provided as facts; derived: produced by rules; both: can be either (not recommended unless necessary)."
+    },
+    "PredicateKind": {
+      "type": "string",
+      "enum": ["domain", "condition", "decision", "ui", "audit", "builtin"],
+      "description": "domain: business facts; condition: meets_condition-like; decision: approvals/denials; ui: visibility/availability; audit: violates etc; builtin: comparisons."
+    },
+    "PredicateSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "arity", "signature", "io", "kind"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Predicate name without arity, e.g. delivery_status"
+        },
+        "arity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "pred": {
+          "$ref": "#/$defs/PredicateArity",
+          "description": "Optional convenience field duplicating name/arity as name/arity."
+        },
+        "signature": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ArgType" },
+          "description": "Argument type hints, length must equal arity."
+        },
+        "io": { "$ref": "#/$defs/PredicateIO" },
+        "kind": { "$ref": "#/$defs/PredicateKind" },
+        "meaning_pl": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short Polish description of the predicate semantics."
+        },
+        "allowed_in": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "head": { "type": "boolean", "default": true },
+            "body": { "type": "boolean", "default": true },
+            "negated_body": { "type": "boolean", "default": false }
+          },
+          "description": "Where the predicate is allowed to appear in Horn rules."
+        },
+        "value_domain": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enum_arg_index": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based index of argument that has enumerated values (e.g. status)."
+            },
+            "allowed_values": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "description": "Optional enumeration constraints for a specific argument."
+        },
+        "notes": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "signature": { "type": "array" }, "arity": { "type": "integer" } } },
+          "then": {
+            "properties": {
+              "signature": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
