@@ -15,6 +15,7 @@ FAKTY WEJŚCIOWE (EDB — to, co wiemy o sprawie):
 FAKTY WYPROWADZONE PRZEZ SOLVER (IDB — wnioski systemu):
 {{DERIVED_FACTS}}
 
+WYNIKI ZAPYTAŃ UŻYTKOWNIKA:
 {{GOAL_RESULTS}}
 
 ZADANIE:
@@ -22,7 +23,7 @@ Na podstawie powyższych danych napisz zwięzłe wyjaśnienie w języku polskim:
 
 1. Jakie wnioski system logicznie wyprowadził na podstawie opisanego przypadku?
 2. Co te wnioski oznaczają w praktyce (interpretacja semantyczna, nie techniczna)?
-3. Jeśli podano zapytania (GOAL RESULTS) — odpowiedz wprost: PRAWDA lub FAŁSZ dla każdego zapytania i wyjaśnij dlaczego.
+3. Jeśli sekcja "WYNIKI ZAPYTAŃ UŻYTKOWNIKA" zawiera wyniki (tzn. nie jest "(nie podano zapytań)") — dla każdego zapytania wyjaśnij: co pytanie oznacza, co zwrócił solver (PRAWDA/FAŁSZ oraz jakie obiekty spełniają warunek) i co to oznacza praktycznie dla opisanej sprawy.
 4. Jeśli system nie wyprowadził żadnych nowych faktów — wyjaśnij co to oznacza (np. żadne reguły nie miały zastosowania, brak spełnionych warunków).
 
 STYL:

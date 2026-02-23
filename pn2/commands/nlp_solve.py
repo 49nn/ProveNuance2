@@ -176,16 +176,16 @@ def _format_derived_for_llm(
     else:
         derived_text = "  (brak faktów pochodnych)"
 
-    # Wyniki zapytań
+    # Wyniki zapytań — header jest w szablonie, tu tylko treść
     if not goal_results:
-        goals_text = ""
+        goals_text = "(nie podano zapytań)"
     else:
-        lines = ["WYNIKI ZAPYTAŃ (GOAL RESULTS):"]
+        lines = []
         for goal_str, results in goal_results:
             if not results:
                 lines.append(f"  {goal_str} → FAŁSZ (brak podstawień)")
             else:
-                has_vars = any("?" in str(v) for v in results[0].values()) if results else False
+                has_vars = any(k.startswith("?") for k in results[0].keys()) if results else False
                 if not has_vars or not results[0]:
                     lines.append(f"  {goal_str} → PRAWDA")
                 else:
@@ -431,14 +431,15 @@ def run(args: argparse.Namespace) -> None:
         return
 
     # Interpretacja to narracja — nie JSON; drukujemy bezpośrednio.
-    # Scalamy pojedyncze złamania wiersza w obrębie akapitu w spację,
-    # zachowując podwójne nowe linie jako granice akapitów.
+    # Normalizujemy końce linii (API może zwracać \r\n), scalamy pojedyncze
+    # złamania wiersza w obrębie akapitu w spację, zachowując granice akapitów.
     import re
-    paragraphs = re.split(r"\n{2,}", raw_interp.strip())
+    text = raw_interp.strip().replace("\r\n", "\n").replace("\r", "\n")
+    paragraphs = re.split(r"\n{2,}", text)
     normalized = "\n\n".join(
-        re.sub(r"\n", " ", p.strip()) for p in paragraphs if p.strip()
+        re.sub(r"\n+", " ", p.strip()) for p in paragraphs if p.strip()
     )
-    console.print(normalized)
+    console.print(normalized, markup=False, highlight=False)
 
 
 # ---------------------------------------------------------------------------
