@@ -18,6 +18,7 @@ import pathlib
 import re
 import sys
 import time
+from typing import Protocol, cast
 
 try:
     from dotenv import load_dotenv
@@ -40,6 +41,15 @@ _ENV_KEY        = "GEMINI_API_KEY"
 
 # Wzorzec do wyciągnięcia liczby sekund z komunikatu API (np. "retry in 18.8s")
 _RETRY_DELAY_RE = re.compile(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", re.IGNORECASE)
+
+
+class _GeminiGenerateResponse(Protocol):
+    text: str | None
+
+
+class _GeminiModelsAPI(Protocol):
+    def generate_content(self, *, model: str, contents: str) -> _GeminiGenerateResponse:
+        ...
 
 
 def _parse_retry_delay(error: Exception) -> float | None:
@@ -97,8 +107,12 @@ def call_gemini(
 
     while True:
         try:
-            response = client.models.generate_content(model=model, contents=prompt)
-            return response.text
+            models_api = cast(_GeminiModelsAPI, client.models)
+            response = models_api.generate_content(model=model, contents=prompt)
+            text = response.text
+            if text is None:
+                raise RuntimeError("Gemini zwrocil pusta odpowiedz tekstowa.")
+            return text
 
         except _genai_errors.ClientError as exc:
             if exc.code != 429:
