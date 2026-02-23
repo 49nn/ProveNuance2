@@ -6,6 +6,7 @@ Użycie:
 
 Komendy:
   predicates   Listuje predykaty z bazy danych.
+  ingest       Parsuje PDF na spany sekcji i zapisuje do JSON / bazy.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import argparse
 import sys
 
 from pn2.commands import predicates as cmd_predicates
+from pn2.commands import ingest as cmd_ingest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,6 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.required = True
 
     cmd_predicates.add_parser(subparsers)
+    cmd_ingest.add_parser(subparsers)
 
     return parser
 

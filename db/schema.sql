@@ -87,3 +87,24 @@ CREATE TABLE IF NOT EXISTS predicate (
 -- Indeks pomocniczy do filtrowania po io/kind
 CREATE INDEX IF NOT EXISTS idx_predicate_io   ON predicate (io);
 CREATE INDEX IF NOT EXISTS idx_predicate_kind ON predicate (kind);
+
+-- ---------------------------------------------------------------------------
+-- document_span
+-- Mapowanie: DocumentSpan (data_model/documents.py)
+-- Sekcje dokumentów PDF podzielonych przez pdf/parser.py.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS document_span (
+    id          serial  PRIMARY KEY,
+    doc_id      text    NOT NULL,   -- identyfikator dokumentu (nazwa pliku / fragment_id)
+    unit        text    NOT NULL,   -- np. "3.1(b)"
+    title       text    NOT NULL,
+    content     text    NOT NULL,
+    level       integer NOT NULL,
+    parent_unit text,
+    page_start  integer NOT NULL,
+    page_end    integer NOT NULL,
+    UNIQUE (doc_id, unit)
+);
+
+CREATE INDEX IF NOT EXISTS idx_span_doc ON document_span (doc_id);
