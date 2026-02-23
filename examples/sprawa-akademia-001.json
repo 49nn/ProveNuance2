@@ -1,0 +1,32 @@
+{
+  "case_id": "sprawa-akademia-001",
+  "domain":  "event",
+  "_comment": "Przykład: dwie osoby rejestrują się na Akademię Managera 4. Jedna z nich podlega regulaminowi.",
+
+  "facts": [
+    {"pred": "registration",      "args": ["reg_jan"]},
+    {"pred": "registrant",        "args": ["reg_jan", "jan_kowalski"]},
+    {"pred": "registration_for",  "args": ["reg_jan", "akademia_managera_4_event"]},
+    {"pred": "registration_status","args": ["reg_jan", "confirmed"]},
+
+    {"pred": "registration",      "args": ["reg_anna"]},
+    {"pred": "registrant",        "args": ["reg_anna", "anna_nowak"]},
+    {"pred": "registration_for",  "args": ["reg_anna", "akademia_managera_4_event"]},
+    {"pred": "registration_status","args": ["reg_anna", "pending"]},
+
+    {"pred": "user",              "args": ["jan_kowalski"]},
+    {"pred": "user",              "args": ["anna_nowak"]},
+
+    {"pred": "has_account",       "args": ["jan_kowalski", "acc_jan"]},
+    {"pred": "has_account",       "args": ["anna_nowak",   "acc_anna"]},
+    {"pred": "account_status",    "args": ["acc_jan",  "active"]},
+    {"pred": "account_status",    "args": ["acc_anna", "active"]},
+
+    {"pred": "consent",           "args": ["jan_kowalski",  "data_processing", "given"]},
+    {"pred": "consent",           "args": ["anna_nowak",    "data_processing", "given"]},
+
+    {"pred": "event",             "args": ["akademia_managera_4_event"]},
+    {"pred": "event_capacity",    "args": ["akademia_managera_4_event", "30"]},
+    {"pred": "event_platform",    "args": ["akademia_managera_4_event", "online"]}
+  ]
+}

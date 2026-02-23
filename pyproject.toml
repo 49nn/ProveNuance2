@@ -20,7 +20,7 @@ dependencies = [
 pn2 = "pn2.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["pn2*", "pdf*", "data_model*", "llm_query*"]
+include = ["pn2*", "pdf*", "data_model*", "llm_query*", "solver*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

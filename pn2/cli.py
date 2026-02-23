@@ -16,6 +16,7 @@ Komendy:
   conditions   Listuje warunki nazwane (ConditionDefinition) odkryte przez ekstraktor.
   load-manifest Ładuje manifest predykatów (JSON) do tabeli predicate.
   apply-schema  Aplikuje db/schema.sql do bazy danych (idempotentne).
+  solve         Uruchamia solver Datalog na regułach z bazy i faktach z JSON.
 """
 
 from __future__ import annotations
@@ -41,6 +42,7 @@ from pn2.commands import rules as cmd_rules
 from pn2.commands import conditions as cmd_conditions
 from pn2.commands import load_manifest as cmd_load_manifest
 from pn2.commands import apply_schema as cmd_apply_schema
+from pn2.commands import solve as cmd_solve
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -71,6 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
     cmd_conditions.add_parser(subparsers)
     cmd_load_manifest.add_parser(subparsers)
     cmd_apply_schema.add_parser(subparsers)
+    cmd_solve.add_parser(subparsers)
 
     return parser
 
