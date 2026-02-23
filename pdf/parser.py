@@ -36,7 +36,7 @@ _BlockKind = Literal["HEADING", "BODY"]
 
 
 class _ClassifiedBlock:
-    __slots__ = ("kind", "level", "unit_id", "raw_text", "page", "bbox", "gap_after")
+    __slots__ = ("kind", "level", "unit_id", "raw_text", "page", "bbox", "gap_after", "pattern_matched")
 
     def __init__(
         self,
@@ -47,6 +47,7 @@ class _ClassifiedBlock:
         level: int = 0,
         unit_id: str = "",
         gap_after: float = 0.0,
+        pattern_matched: bool = False,
     ) -> None:
         self.kind = kind
         self.level = level
@@ -55,6 +56,7 @@ class _ClassifiedBlock:
         self.page = page
         self.bbox = bbox
         self.gap_after = gap_after
+        self.pattern_matched = pattern_matched  # True = regex, False = font heurystyki
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +98,10 @@ def _parse_document(doc: fitz.Document, doc_id: str) -> SpanTree:
     # Krok 5: klasyfikuj bloki
     classified = _classify_all_blocks(pages_raw, repeated, median_size, left_margin)
 
-    # Krok 6: zbuduj SpanTree
+    # Krok 6: scal kolejne font-nagłówki w jeden (np. tytuł na kilku liniach)
+    classified = _merge_font_headings(classified)
+
+    # Krok 7: zbuduj SpanTree
     return _build_spans(classified, doc_id)
 
 
@@ -168,7 +173,7 @@ def _classify_all_blocks(
 
             heading_info = _detect_heading(block, text, median_size)
             if heading_info:
-                level, unit_id = heading_info
+                level, unit_id, pattern_matched = heading_info
                 result.append(_ClassifiedBlock(
                     kind="HEADING",
                     level=level,
@@ -177,6 +182,7 @@ def _classify_all_blocks(
                     page=page_no,
                     bbox=bbox,
                     gap_after=0.0,
+                    pattern_matched=pattern_matched,
                 ))
             else:
                 result.append(_ClassifiedBlock(
@@ -194,7 +200,7 @@ def _detect_heading(
     block: dict,
     text: str,
     median_size: float,
-) -> tuple[int, str] | None:
+) -> tuple[int, str, bool] | None:
     """
     Wykrywa, czy blok jest nagłówkiem sekcji.
 
@@ -202,7 +208,9 @@ def _detect_heading(
       1. Dopasowanie do wzorca sekcji (regex) → niezależnie od fontu.
       2. Heurystyki fontu (rozmiar lub bold) → jeśli brak wzorca.
 
-    Zwraca (level, unit_id) lub None.
+    Zwraca (level, unit_id, pattern_matched) lub None.
+    pattern_matched=True  → trafiony przez regex (numerowany)
+    pattern_matched=False → trafiony przez font heurystyki (nienumerowany)
     """
     stripped = text.strip()
     if not stripped:
@@ -213,33 +221,52 @@ def _detect_heading(
         m = pat.regex.match(stripped)
         if m:
             unit_id = _normalise_unit(pat.extract_unit(m))
-            return pat.level, unit_id
+            return pat.level, unit_id, True
 
-    # Warstwa 2: heurystyki fontu
-    max_size, is_bold = _max_font_metrics(block)
-    if max_size > median_size + 1.5 or (is_bold and max_size >= median_size):
-        # Użyj pierwszych ~60 znaków jako unit_id (slug)
+    # Warstwa 2: heurystyki fontu — tylko dla KRÓTKICH bloków (nagłówki).
+    # Długi tekst to akapit, nawet jeśli zawiera pogrubione fragmenty.
+    if len(stripped) > 120 or len(stripped.split()) > 18:
+        return None
+
+    max_size, bold_ratio = _font_metrics(block)
+
+    # Rozmiar wyraźnie większy od mediany → nagłówek niezależnie od bold.
+    if max_size > median_size + 1.5:
         unit_id = _normalise_unit(stripped[:60])
         level = 1 if max_size > median_size + 3 else 2
-        return level, unit_id
+        return level, unit_id, False
+
+    # Bold tylko jeśli WIĘKSZOŚĆ tekstu jest pogrubiona (≥ 80 %).
+    if bold_ratio >= 0.8 and max_size >= median_size:
+        unit_id = _normalise_unit(stripped[:60])
+        return 2, unit_id, False
 
     return None
 
 
-def _max_font_metrics(block: dict) -> tuple[float, bool]:
-    """Zwraca (max_rozmiar_fontu, czy_bold) dla bloku."""
+def _font_metrics(block: dict) -> tuple[float, float]:
+    """Zwraca (max_rozmiar_fontu, bold_ratio) dla bloku.
+
+    bold_ratio = udział znaków w pogrubionych spanach (0.0 – 1.0).
+    Pozwala odróżnić blok całkowicie pogrubiony (nagłówek) od akapitu
+    z pojedynczym pogrubionym wyrazem.
+    """
     max_size = 0.0
-    any_bold = False
+    total_chars = 0
+    bold_chars = 0
     for line in block.get("lines", []):
         for span in line.get("spans", []):
             size = span.get("size", 0.0)
             flags = span.get("flags", 0)
-            bold = bool(flags & 2**4)  # bit 4 = bold w PyMuPDF
+            text = span.get("text", "")
+            n = len(text)
             if size > max_size:
                 max_size = size
-            if bold:
-                any_bold = True
-    return max_size, any_bold
+            total_chars += n
+            if flags & (1 << 4):  # bit 4 = bold w PyMuPDF
+                bold_chars += n
+    bold_ratio = bold_chars / total_chars if total_chars else 0.0
+    return max_size, bold_ratio
 
 
 def _normalise_unit(text: str) -> str:
@@ -263,6 +290,68 @@ def _get_block_text_raw(block: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Scalanie nagłówków font-heurystycznych
+# ---------------------------------------------------------------------------
+
+def _merge_font_headings(classified: list[_ClassifiedBlock]) -> list[_ClassifiedBlock]:
+    """
+    Scala kolejne bloki-nagłówki wykryte wyłącznie heurystykami fontu
+    (pattern_matched=False) w jeden nagłówek.
+
+    Przypadek: tytuł dokumentu rozłożony na kilka krótkich linii/bloków:
+      "REGULAMIN UCZESTNICTWA W WYDARZENIACH Z CYKLU"
+      "AKADEMIA MANAGERA PR HORYZONT EUROPA"
+      "EDYCJA 4"
+    → jeden span z tytułem jako unit_id.
+
+    Nagłówki regex (numerowane, np. "Art. 3", "3.1") NIE są scalane.
+    """
+    result: list[_ClassifiedBlock] = []
+    i = 0
+    while i < len(classified):
+        block = classified[i]
+
+        # Tylko nienumerowane nagłówki font-heurystyczne są kandydatami
+        if block.kind != "HEADING" or block.pattern_matched:
+            result.append(block)
+            i += 1
+            continue
+
+        # Zbierz następne bezpośrednio sąsiadujące bloki tego samego typu
+        group: list[_ClassifiedBlock] = [block]
+        j = i + 1
+        while j < len(classified):
+            nxt = classified[j]
+            if nxt.kind == "HEADING" and not nxt.pattern_matched:
+                group.append(nxt)
+                j += 1
+            else:
+                break
+
+        if len(group) == 1:
+            result.append(block)
+        else:
+            # Scal teksty separatorem spacji (zachowuje czytelność)
+            merged_text = " ".join(b.raw_text.strip() for b in group)
+            unit_id = _normalise_unit(merged_text[:60])
+            merged = _ClassifiedBlock(
+                kind="HEADING",
+                level=group[0].level,
+                unit_id=unit_id,
+                raw_text=merged_text,
+                page=group[0].page,
+                bbox=group[0].bbox,
+                gap_after=0.0,
+                pattern_matched=False,
+            )
+            result.append(merged)
+
+        i = j
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Budowanie SpanTree
 # ---------------------------------------------------------------------------
 
@@ -270,19 +359,30 @@ def _build_spans(classified: list[_ClassifiedBlock], doc_id: str) -> SpanTree:
     """
     Scala sklasyfikowane bloki w listę DocumentSpan.
     Każdy heading otwiera nową sekcję; treść akapitów idzie do content bieżącej.
+
+    Duplikaty unit_id (np. wielokrotne "a)" w dokumencie) dostają sufiks "#N",
+    żeby zachować unikalność wymaganą przez UNIQUE (doc_id, unit) w bazie.
     """
     spans: list[DocumentSpan] = []
     # Stos (level, unit_id) dla obliczenia parent_unit
     heading_stack: list[tuple[int, str]] = []
+    # Licznik wystąpień każdego unit_id w tym dokumencie
+    seen_units: dict[str, int] = {}
 
     # Bufor bieżącej sekcji
     current_heading: _ClassifiedBlock | None = None
+    current_unit: str = ""   # unikalny unit_id bieżącej sekcji
     body_blocks: list[str] = []
     body_gaps: list[float] = []
     page_end: int = 1
 
+    def _make_unique(unit: str) -> str:
+        n = seen_units.get(unit, 0) + 1
+        seen_units[unit] = n
+        return unit if n == 1 else f"{unit}#{n}"
+
     def _flush() -> None:
-        nonlocal current_heading, body_blocks, body_gaps
+        nonlocal current_heading, current_unit, body_blocks, body_gaps
         if current_heading is None:
             body_blocks = []
             body_gaps = []
@@ -290,7 +390,7 @@ def _build_spans(classified: list[_ClassifiedBlock], doc_id: str) -> SpanTree:
         content = join_blocks(body_blocks, body_gaps)
         parent = _find_parent(heading_stack, current_heading.level)
         spans.append(DocumentSpan(
-            unit=current_heading.unit_id,
+            unit=current_unit,
             title=current_heading.raw_text,
             content=content,
             level=current_heading.level,
@@ -305,11 +405,13 @@ def _build_spans(classified: list[_ClassifiedBlock], doc_id: str) -> SpanTree:
         if block.kind == "HEADING":
             _flush()
             page_end = block.page
+            unique_uid = _make_unique(block.unit_id)
             # Aktualizuj stos
             while heading_stack and heading_stack[-1][0] >= block.level:
                 heading_stack.pop()
             current_heading = block
-            heading_stack.append((block.level, block.unit_id))
+            current_unit = unique_uid
+            heading_stack.append((block.level, unique_uid))
         else:
             if body_blocks:
                 body_gaps.append(block.gap_after)

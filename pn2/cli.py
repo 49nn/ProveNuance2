@@ -7,6 +7,7 @@ Użycie:
 Komendy:
   predicates   Listuje predykaty z bazy danych.
   ingest       Parsuje PDF na spany sekcji i zapisuje do JSON / bazy.
+  reset        Usuwa dane z bazy (doc / predicates / rules / conditions / all).
 """
 
 from __future__ import annotations
@@ -14,8 +15,16 @@ from __future__ import annotations
 import argparse
 import sys
 
+# Windows: terminal może używać cp1252 — wymuszamy UTF-8, żeby polskie znaki
+# w tekstach pomocy argparse były wypisywane poprawnie.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from pn2.commands import predicates as cmd_predicates
 from pn2.commands import ingest as cmd_ingest
+from pn2.commands import reset as cmd_reset
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     cmd_predicates.add_parser(subparsers)
     cmd_ingest.add_parser(subparsers)
+    cmd_reset.add_parser(subparsers)
 
     return parser
 
