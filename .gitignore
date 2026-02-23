@@ -28,8 +28,12 @@ dist/
 *.userosscache
 *.sln.docstates
 
+# Secrets
+.env
+
 # OS files
 .DS_Store
 Thumbs.db
 Regulamin.pdf
 Regulamin.spans.json
+.env.example
