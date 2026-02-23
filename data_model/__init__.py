@@ -9,7 +9,7 @@ Moduły:
   conditions — ConditionDefinition, ConditionDictionary, NewConditionDefinition
   rules      — Rule
   predicates — PredicateSpec, DerivedPredicate, ArgType, PredicateIO,
-               PredicateKind, AllowedIn, ValueDomain
+               PredicateKind, DomainScope, AllowedIn, ValueDomain
 
 Mapowanie na schemat: horn_json_v2_with_scoped_assumptions
   fragment_id          → str
@@ -43,6 +43,7 @@ from .predicates import (
     ArgType,
     PredicateIO,
     PredicateKind,
+    DomainScope,
     AllowedIn,
     ValueDomain,
     PredicateSpec,
@@ -69,6 +70,7 @@ __all__ = [
     "ArgType",
     "PredicateIO",
     "PredicateKind",
+    "DomainScope",
     "AllowedIn",
     "ValueDomain",
     "PredicateSpec",

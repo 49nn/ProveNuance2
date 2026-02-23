@@ -21,814 +21,1499 @@
       "name": "user",
       "arity": 1,
       "pred": "user/1",
-      "signature": ["user"],
+      "signature": [
+        "user"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja użytkownika."
+      "meaning_pl": "Encja użytkownika.",
+      "domain": "generic"
     },
     {
       "name": "account",
       "arity": 1,
       "pred": "account/1",
-      "signature": ["account"],
+      "signature": [
+        "account"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja konta."
+      "meaning_pl": "Encja konta.",
+      "domain": "generic"
     },
     {
       "name": "has_account",
       "arity": 2,
       "pred": "has_account/2",
-      "signature": ["user", "account"],
+      "signature": [
+        "user",
+        "account"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Użytkownik U ma konto A."
+      "meaning_pl": "Użytkownik U ma konto A.",
+      "domain": "generic"
     },
     {
       "name": "account_status",
       "arity": 2,
       "pred": "account_status/2",
-      "signature": ["account", "enum"],
+      "signature": [
+        "account",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Status konta (np. active/suspended/terminated).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["active", "suspended", "terminated", "pending_verification"]
-      }
+        "allowed_values": [
+          "active",
+          "suspended",
+          "terminated",
+          "pending_verification"
+        ]
+      },
+      "domain": "generic"
     },
     {
       "name": "role",
       "arity": 2,
       "pred": "role/2",
-      "signature": ["user", "enum"],
+      "signature": [
+        "user",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Rola użytkownika (np. seller/buyer/bidder).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["seller", "buyer", "bidder", "business_user", "guest"]
-      }
+        "allowed_values": [
+          "seller",
+          "buyer",
+          "bidder",
+          "business_user",
+          "guest"
+        ]
+      },
+      "domain": "generic"
     },
     {
       "name": "marketplace",
       "arity": 1,
       "pred": "marketplace/1",
-      "signature": ["marketplace"],
+      "signature": [
+        "marketplace"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja marketplace/serwisu."
+      "meaning_pl": "Encja marketplace/serwisu.",
+      "domain": "e-commerce"
     },
     {
       "name": "in_marketplace",
       "arity": 2,
       "pred": "in_marketplace/2",
-      "signature": ["entity", "marketplace"],
+      "signature": [
+        "entity",
+        "marketplace"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Obiekt X jest w kontekście marketplace M."
+      "meaning_pl": "Obiekt X jest w kontekście marketplace M.",
+      "domain": "e-commerce"
     },
-
     {
       "name": "offer",
       "arity": 1,
       "pred": "offer/1",
-      "signature": ["offer"],
+      "signature": [
+        "offer"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja oferty."
+      "meaning_pl": "Encja oferty.",
+      "domain": "e-commerce"
     },
     {
       "name": "offer_status",
       "arity": 2,
       "pred": "offer_status/2",
-      "signature": ["offer", "enum"],
+      "signature": [
+        "offer",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Status oferty (np. published/ended/removed).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["draft", "published", "ended", "removed", "hidden"]
-      }
+        "allowed_values": [
+          "draft",
+          "published",
+          "ended",
+          "removed",
+          "hidden"
+        ]
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "seller_of_offer",
       "arity": 2,
       "pred": "seller_of_offer/2",
-      "signature": ["offer", "user"],
+      "signature": [
+        "offer",
+        "user"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Sprzedający S jest właścicielem oferty O."
+      "meaning_pl": "Sprzedający S jest właścicielem oferty O.",
+      "domain": "e-commerce"
     },
     {
       "name": "category",
       "arity": 2,
       "pred": "category/2",
-      "signature": ["offer", "enum"],
+      "signature": [
+        "offer",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Kategoria oferty (identyfikator kategorii)."
+      "meaning_pl": "Kategoria oferty (identyfikator kategorii).",
+      "domain": "e-commerce"
     },
     {
       "name": "item",
       "arity": 1,
       "pred": "item/1",
-      "signature": ["item"],
+      "signature": [
+        "item"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja towaru/przedmiotu."
+      "meaning_pl": "Encja towaru/przedmiotu.",
+      "domain": "e-commerce"
     },
     {
       "name": "offer_item",
       "arity": 2,
       "pred": "offer_item/2",
-      "signature": ["offer", "item"],
+      "signature": [
+        "offer",
+        "item"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Oferta O dotyczy towaru I."
+      "meaning_pl": "Oferta O dotyczy towaru I.",
+      "domain": "e-commerce"
     },
     {
       "name": "product",
       "arity": 1,
       "pred": "product/1",
-      "signature": ["product"],
+      "signature": [
+        "product"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja produktu katalogowego."
+      "meaning_pl": "Encja produktu katalogowego.",
+      "domain": "e-commerce"
     },
     {
       "name": "linked_to_product",
       "arity": 2,
       "pred": "linked_to_product/2",
-      "signature": ["offer", "product"],
+      "signature": [
+        "offer",
+        "product"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Oferta O jest powiązana z produktem P."
+      "meaning_pl": "Oferta O jest powiązana z produktem P.",
+      "domain": "e-commerce"
     },
     {
       "name": "offer_param",
       "arity": 3,
       "pred": "offer_param/3",
-      "signature": ["offer", "string", "any"],
+      "signature": [
+        "offer",
+        "string",
+        "any"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Parametr oferty: offer_param(O, Key, Val)."
+      "meaning_pl": "Parametr oferty: offer_param(O, Key, Val).",
+      "domain": "e-commerce"
     },
-
     {
       "name": "mode",
       "arity": 2,
       "pred": "mode/2",
-      "signature": ["offer", "enum"],
+      "signature": [
+        "offer",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Tryb sprzedaży oferty.",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["buy_now_only", "auction"]
-      }
+        "allowed_values": [
+          "buy_now_only",
+          "auction"
+        ]
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "fixed_price",
       "arity": 2,
       "pred": "fixed_price/2",
-      "signature": ["offer", "decimal"],
+      "signature": [
+        "offer",
+        "decimal"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Cena z góry ustalona dla oferty."
+      "meaning_pl": "Cena z góry ustalona dla oferty.",
+      "domain": "e-commerce"
     },
     {
       "name": "quantity",
       "arity": 2,
       "pred": "quantity/2",
-      "signature": ["offer", "int"],
+      "signature": [
+        "offer",
+        "int"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Liczba sztuk w ofercie."
+      "meaning_pl": "Liczba sztuk w ofercie.",
+      "domain": "e-commerce"
     },
     {
       "name": "feature_enabled",
       "arity": 2,
       "pred": "feature_enabled/2",
-      "signature": ["offer", "enum"],
+      "signature": [
+        "offer",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Flaga/cecha włączona dla oferty (np. allegro_smart, buy_now_in_auction)."
+      "meaning_pl": "Flaga/cecha włączona dla oferty (np. allegro_smart, buy_now_in_auction).",
+      "domain": "e-commerce"
     },
     {
       "name": "min_price",
       "arity": 2,
       "pred": "min_price/2",
-      "signature": ["offer", "decimal"],
+      "signature": [
+        "offer",
+        "decimal"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Cena minimalna w aukcji (jeśli ustawiona)."
+      "meaning_pl": "Cena minimalna w aukcji (jeśli ustawiona).",
+      "domain": "e-commerce"
     },
     {
       "name": "visible_to_users",
       "arity": 2,
       "pred": "visible_to_users/2",
-      "signature": ["offer", "enum"],
+      "signature": [
+        "offer",
+        "enum"
+      ],
       "io": "derived",
       "kind": "ui",
       "meaning_pl": "Pole informacji jest jawne dla użytkowników (np. min_price).",
-      "allowed_in": { "head": true, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "hidden_to_users",
       "arity": 2,
       "pred": "hidden_to_users/2",
-      "signature": ["offer", "enum"],
+      "signature": [
+        "offer",
+        "enum"
+      ],
       "io": "derived",
       "kind": "ui",
       "meaning_pl": "Pole informacji jest niejawne dla użytkowników (np. min_price).",
-      "allowed_in": { "head": true, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "e-commerce"
     },
-
     {
       "name": "bid",
       "arity": 1,
       "pred": "bid/1",
-      "signature": ["bid"],
+      "signature": [
+        "bid"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja oferty licytanta (bid)."
+      "meaning_pl": "Encja oferty licytanta (bid).",
+      "domain": "e-commerce"
     },
     {
       "name": "bid_in_offer",
       "arity": 2,
       "pred": "bid_in_offer/2",
-      "signature": ["bid", "offer"],
+      "signature": [
+        "bid",
+        "offer"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Bid B dotyczy aukcji/oferty O."
+      "meaning_pl": "Bid B dotyczy aukcji/oferty O.",
+      "domain": "e-commerce"
     },
     {
       "name": "bidder_of_bid",
       "arity": 2,
       "pred": "bidder_of_bid/2",
-      "signature": ["bid", "user"],
+      "signature": [
+        "bid",
+        "user"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Użytkownik U złożył bid B."
+      "meaning_pl": "Użytkownik U złożył bid B.",
+      "domain": "e-commerce"
     },
     {
       "name": "bid_price",
       "arity": 2,
       "pred": "bid_price/2",
-      "signature": ["bid", "decimal"],
+      "signature": [
+        "bid",
+        "decimal"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Cena w bidzie."
+      "meaning_pl": "Cena w bidzie.",
+      "domain": "e-commerce"
     },
     {
       "name": "bid_time",
       "arity": 2,
       "pred": "bid_time/2",
-      "signature": ["bid", "time"],
+      "signature": [
+        "bid",
+        "time"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Czas złożenia bidu."
+      "meaning_pl": "Czas złożenia bidu.",
+      "domain": "e-commerce"
     },
     {
       "name": "bid_state",
       "arity": 2,
       "pred": "bid_state/2",
-      "signature": ["bid", "enum"],
+      "signature": [
+        "bid",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Stan bidu (np. valid/rejected/withdrawn).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["valid", "rejected", "withdrawn"]
-      }
+        "allowed_values": [
+          "valid",
+          "rejected",
+          "withdrawn"
+        ]
+      },
+      "domain": "e-commerce"
     },
-
     {
       "name": "transaction",
       "arity": 1,
       "pred": "transaction/1",
-      "signature": ["transaction"],
+      "signature": [
+        "transaction"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja transakcji (umowy)."
+      "meaning_pl": "Encja transakcji (umowy).",
+      "domain": "e-commerce"
     },
     {
       "name": "transaction_for_offer",
       "arity": 2,
       "pred": "transaction_for_offer/2",
-      "signature": ["transaction", "offer"],
+      "signature": [
+        "transaction",
+        "offer"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Transakcja T dotyczy oferty O."
+      "meaning_pl": "Transakcja T dotyczy oferty O.",
+      "domain": "e-commerce"
     },
     {
       "name": "party",
       "arity": 3,
       "pred": "party/3",
-      "signature": ["transaction", "enum", "user"],
+      "signature": [
+        "transaction",
+        "enum",
+        "user"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Strona transakcji: party(T, Role, U).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["seller", "buyer"]
-      }
+        "allowed_values": [
+          "seller",
+          "buyer"
+        ]
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "concluded_via",
       "arity": 2,
       "pred": "concluded_via/2",
-      "signature": ["transaction", "enum"],
+      "signature": [
+        "transaction",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Kanał zawarcia transakcji (np. buy_now/auction_bid).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["buy_now", "auction_bid", "other"]
-      }
+        "allowed_values": [
+          "buy_now",
+          "auction_bid",
+          "other"
+        ]
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "winning_bid",
       "arity": 2,
       "pred": "winning_bid/2",
-      "signature": ["transaction", "bid"],
+      "signature": [
+        "transaction",
+        "bid"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Zwycięski bid w transakcji (aukcja)."
+      "meaning_pl": "Zwycięski bid w transakcji (aukcja).",
+      "domain": "e-commerce"
     },
     {
       "name": "transaction_status",
       "arity": 2,
       "pred": "transaction_status/2",
-      "signature": ["transaction", "enum"],
+      "signature": [
+        "transaction",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Status transakcji (np. paid/shipped/delivered/cancelled).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["new", "in_progress", "paid", "shipped", "delivered", "cancelled", "returned"]
-      }
+        "allowed_values": [
+          "new",
+          "in_progress",
+          "paid",
+          "shipped",
+          "delivered",
+          "cancelled",
+          "returned"
+        ]
+      },
+      "domain": "e-commerce"
     },
-
     {
       "name": "payment",
       "arity": 1,
       "pred": "payment/1",
-      "signature": ["payment"],
+      "signature": [
+        "payment"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja płatności."
+      "meaning_pl": "Encja płatności.",
+      "domain": "generic"
     },
     {
       "name": "payment_for_transaction",
       "arity": 2,
       "pred": "payment_for_transaction/2",
-      "signature": ["payment", "transaction"],
+      "signature": [
+        "payment",
+        "transaction"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Płatność Pay dotyczy transakcji T."
+      "meaning_pl": "Płatność Pay dotyczy transakcji T.",
+      "domain": "e-commerce"
     },
     {
       "name": "payment_method",
       "arity": 2,
       "pred": "payment_method/2",
-      "signature": ["payment", "enum"],
+      "signature": [
+        "payment",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Metoda płatności (identyfikator)."
+      "meaning_pl": "Metoda płatności (identyfikator).",
+      "domain": "generic"
     },
     {
       "name": "payment_status",
       "arity": 2,
       "pred": "payment_status/2",
-      "signature": ["payment", "enum"],
+      "signature": [
+        "payment",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
       "meaning_pl": "Status płatności (pending/received/refunded/failed).",
       "value_domain": {
         "enum_arg_index": 2,
-        "allowed_values": ["pending", "authorized", "received", "refunded", "failed"]
-      }
+        "allowed_values": [
+          "pending",
+          "authorized",
+          "received",
+          "refunded",
+          "failed"
+        ]
+      },
+      "domain": "generic"
     },
     {
       "name": "payment_deadline",
       "arity": 2,
       "pred": "payment_deadline/2",
-      "signature": ["transaction", "time"],
+      "signature": [
+        "transaction",
+        "time"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Termin płatności dla transakcji."
+      "meaning_pl": "Termin płatności dla transakcji.",
+      "domain": "generic"
     },
-
     {
       "name": "delivery",
       "arity": 1,
       "pred": "delivery/1",
-      "signature": ["delivery"],
+      "signature": [
+        "delivery"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja dostawy/przesyłki."
+      "meaning_pl": "Encja dostawy/przesyłki.",
+      "domain": "e-commerce"
     },
     {
       "name": "delivery_for_transaction",
       "arity": 2,
       "pred": "delivery_for_transaction/2",
-      "signature": ["delivery", "transaction"],
+      "signature": [
+        "delivery",
+        "transaction"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Przesyłka D dotyczy transakcji T."
+      "meaning_pl": "Przesyłka D dotyczy transakcji T.",
+      "domain": "e-commerce"
     },
     {
       "name": "delivery_method",
       "arity": 2,
       "pred": "delivery_method/2",
-      "signature": ["delivery", "enum"],
+      "signature": [
+        "delivery",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Metoda dostawy (identyfikator)."
+      "meaning_pl": "Metoda dostawy (identyfikator).",
+      "domain": "e-commerce"
     },
     {
       "name": "delivery_status",
       "arity": 2,
       "pred": "delivery_status/2",
-      "signature": ["delivery", "enum"],
+      "signature": [
+        "delivery",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Status przesyłki (np. delivered/returned_to_seller)."
+      "meaning_pl": "Status przesyłki (np. delivered/returned_to_seller).",
+      "domain": "e-commerce"
     },
     {
       "name": "tracking_number",
       "arity": 2,
       "pred": "tracking_number/2",
-      "signature": ["delivery", "string"],
+      "signature": [
+        "delivery",
+        "string"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Numer śledzenia przesyłki."
+      "meaning_pl": "Numer śledzenia przesyłki.",
+      "domain": "e-commerce"
     },
-
     {
       "name": "is_prohibited_item",
       "arity": 2,
       "pred": "is_prohibited_item/2",
-      "signature": ["item", "marketplace"],
+      "signature": [
+        "item",
+        "marketplace"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Towar jest zakazany w marketplace."
+      "meaning_pl": "Towar jest zakazany w marketplace.",
+      "domain": "e-commerce"
     },
     {
       "name": "is_conditionally_allowed_item",
       "arity": 2,
       "pred": "is_conditionally_allowed_item/2",
-      "signature": ["item", "marketplace"],
+      "signature": [
+        "item",
+        "marketplace"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Towar dozwolony warunkowo w marketplace."
+      "meaning_pl": "Towar dozwolony warunkowo w marketplace.",
+      "domain": "e-commerce"
     },
     {
       "name": "meets_condition",
       "arity": 2,
       "pred": "meets_condition/2",
-      "signature": ["entity", "enum"],
+      "signature": [
+        "entity",
+        "enum"
+      ],
       "io": "both",
       "kind": "condition",
       "meaning_pl": "Obiekt spełnia warunek ConditionId (może być faktem lub wnioskiem).",
-      "allowed_in": { "head": true, "body": true, "negated_body": true }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": true
+      },
+      "domain": "generic"
     },
     {
       "name": "violates",
       "arity": 2,
       "pred": "violates/2",
-      "signature": ["entity", "enum"],
+      "signature": [
+        "entity",
+        "enum"
+      ],
       "io": "both",
       "kind": "audit",
       "meaning_pl": "Encja narusza regułę/warunek RuleId.",
-      "allowed_in": { "head": true, "body": true, "negated_body": true }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": true
+      },
+      "domain": "generic"
     },
-
     {
       "name": "moderation_action",
       "arity": 2,
       "pred": "moderation_action/2",
-      "signature": ["entity", "enum"],
+      "signature": [
+        "entity",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Akcja moderacyjna (id + typ)."
+      "meaning_pl": "Akcja moderacyjna (id + typ).",
+      "domain": "generic"
     },
     {
       "name": "applied_to",
       "arity": 2,
       "pred": "applied_to/2",
-      "signature": ["entity", "entity"],
+      "signature": [
+        "entity",
+        "entity"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Akcja moderacyjna dotyczy obiektu Target."
+      "meaning_pl": "Akcja moderacyjna dotyczy obiektu Target.",
+      "domain": "generic"
     },
     {
       "name": "action_reason",
       "arity": 2,
       "pred": "action_reason/2",
-      "signature": ["entity", "enum"],
+      "signature": [
+        "entity",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Powód akcji moderacyjnej (ReasonId)."
+      "meaning_pl": "Powód akcji moderacyjnej (ReasonId).",
+      "domain": "generic"
     },
     {
       "name": "restriction",
       "arity": 3,
       "pred": "restriction/3",
-      "signature": ["entity", "enum", "enum"],
+      "signature": [
+        "entity",
+        "enum",
+        "enum"
+      ],
       "io": "both",
       "kind": "domain",
       "meaning_pl": "Ograniczenie funkcjonalności: restriction(Target, Feature, State).",
-      "allowed_in": { "head": true, "body": true, "negated_body": true }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": true
+      },
+      "domain": "generic"
     },
-
     {
       "name": "fee_event",
       "arity": 1,
       "pred": "fee_event/1",
-      "signature": ["fee_event"],
+      "signature": [
+        "fee_event"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Zdarzenie opłatowe/rozliczeniowe."
+      "meaning_pl": "Zdarzenie opłatowe/rozliczeniowe.",
+      "domain": "generic"
     },
     {
       "name": "fee_for_account",
       "arity": 2,
       "pred": "fee_for_account/2",
-      "signature": ["fee_event", "account"],
+      "signature": [
+        "fee_event",
+        "account"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Zdarzenie opłatowe dotyczy konta."
+      "meaning_pl": "Zdarzenie opłatowe dotyczy konta.",
+      "domain": "generic"
     },
     {
       "name": "fee_type",
       "arity": 2,
       "pred": "fee_type/2",
-      "signature": ["fee_event", "enum"],
+      "signature": [
+        "fee_event",
+        "enum"
+      ],
       "io": "both",
       "kind": "domain",
-      "meaning_pl": "Typ opłaty/zdarzenia rozliczeniowego."
+      "meaning_pl": "Typ opłaty/zdarzenia rozliczeniowego.",
+      "domain": "generic"
     },
     {
       "name": "fee_amount",
       "arity": 2,
       "pred": "fee_amount/2",
-      "signature": ["fee_event", "decimal"],
+      "signature": [
+        "fee_event",
+        "decimal"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Kwota opłaty."
+      "meaning_pl": "Kwota opłaty.",
+      "domain": "generic"
     },
     {
       "name": "fee_status",
       "arity": 2,
       "pred": "fee_status/2",
-      "signature": ["fee_event", "enum"],
+      "signature": [
+        "fee_event",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Status opłaty (due/paid/overdue/collected)."
+      "meaning_pl": "Status opłaty (due/paid/overdue/collected).",
+      "domain": "generic"
     },
-
     {
       "name": "complaint",
       "arity": 1,
       "pred": "complaint/1",
-      "signature": ["complaint"],
+      "signature": [
+        "complaint"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja reklamacji/skargi."
+      "meaning_pl": "Encja reklamacji/skargi.",
+      "domain": "generic"
     },
     {
       "name": "complaint_by",
       "arity": 2,
       "pred": "complaint_by/2",
-      "signature": ["complaint", "user"],
+      "signature": [
+        "complaint",
+        "user"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Reklamację złożył użytkownik."
+      "meaning_pl": "Reklamację złożył użytkownik.",
+      "domain": "generic"
     },
     {
       "name": "complaint_about",
       "arity": 2,
       "pred": "complaint_about/2",
-      "signature": ["complaint", "entity"],
+      "signature": [
+        "complaint",
+        "entity"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Reklamacja dotyczy obiektu (np. transakcji/decyzji)."
+      "meaning_pl": "Reklamacja dotyczy obiektu (np. transakcji/decyzji).",
+      "domain": "generic"
     },
     {
       "name": "complaint_status",
       "arity": 2,
       "pred": "complaint_status/2",
-      "signature": ["complaint", "enum"],
+      "signature": [
+        "complaint",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Status reklamacji."
+      "meaning_pl": "Status reklamacji.",
+      "domain": "generic"
     },
-
     {
       "name": "appeal",
       "arity": 1,
       "pred": "appeal/1",
-      "signature": ["appeal"],
+      "signature": [
+        "appeal"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja odwołania."
+      "meaning_pl": "Encja odwołania.",
+      "domain": "generic"
     },
     {
       "name": "appeal_of",
       "arity": 2,
       "pred": "appeal_of/2",
-      "signature": ["appeal", "complaint"],
+      "signature": [
+        "appeal",
+        "complaint"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Odwołanie dotyczy reklamacji."
+      "meaning_pl": "Odwołanie dotyczy reklamacji.",
+      "domain": "generic"
     },
     {
       "name": "appeal_status",
       "arity": 2,
       "pred": "appeal_status/2",
-      "signature": ["appeal", "enum"],
+      "signature": [
+        "appeal",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Status odwołania."
+      "meaning_pl": "Status odwołania.",
+      "domain": "generic"
     },
-
     {
       "name": "discussion",
       "arity": 1,
       "pred": "discussion/1",
-      "signature": ["discussion"],
+      "signature": [
+        "discussion"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja dyskusji/sporu."
+      "meaning_pl": "Encja dyskusji/sporu.",
+      "domain": "generic"
     },
     {
       "name": "discussion_about",
       "arity": 2,
       "pred": "discussion_about/2",
-      "signature": ["discussion", "transaction"],
+      "signature": [
+        "discussion",
+        "transaction"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Dyskusja dotyczy transakcji."
+      "meaning_pl": "Dyskusja dotyczy transakcji.",
+      "domain": "generic"
     },
-
     {
       "name": "rating",
       "arity": 1,
       "pred": "rating/1",
-      "signature": ["rating"],
+      "signature": [
+        "rating"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Encja oceny/opinii."
+      "meaning_pl": "Encja oceny/opinii.",
+      "domain": "e-commerce"
     },
     {
       "name": "rating_about",
       "arity": 2,
       "pred": "rating_about/2",
-      "signature": ["rating", "entity"],
+      "signature": [
+        "rating",
+        "entity"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Ocena dotyczy obiektu (sprzedający/produkt/transakcja)."
+      "meaning_pl": "Ocena dotyczy obiektu (sprzedający/produkt/transakcja).",
+      "domain": "e-commerce"
     },
     {
       "name": "rating_by",
       "arity": 2,
       "pred": "rating_by/2",
-      "signature": ["rating", "user"],
+      "signature": [
+        "rating",
+        "user"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Ocena wystawiona przez użytkownika."
+      "meaning_pl": "Ocena wystawiona przez użytkownika.",
+      "domain": "e-commerce"
     },
     {
       "name": "rating_value",
       "arity": 2,
       "pred": "rating_value/2",
-      "signature": ["rating", "decimal"],
+      "signature": [
+        "rating",
+        "decimal"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Wartość oceny."
+      "meaning_pl": "Wartość oceny.",
+      "domain": "e-commerce"
     },
     {
       "name": "rating_status",
       "arity": 2,
       "pred": "rating_status/2",
-      "signature": ["rating", "enum"],
+      "signature": [
+        "rating",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Status oceny (published/removed/edited)."
+      "meaning_pl": "Status oceny (published/removed/edited).",
+      "domain": "e-commerce"
     },
-
     {
       "name": "consent",
       "arity": 3,
       "pred": "consent/3",
-      "signature": ["user", "enum", "enum"],
+      "signature": [
+        "user",
+        "enum",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Zgoda: consent(U, ConsentType, State)."
+      "meaning_pl": "Zgoda: consent(U, ConsentType, State).",
+      "domain": "generic"
     },
     {
       "name": "recommendation_mode",
       "arity": 2,
       "pred": "recommendation_mode/2",
-      "signature": ["user", "enum"],
+      "signature": [
+        "user",
+        "enum"
+      ],
       "io": "input",
       "kind": "domain",
-      "meaning_pl": "Tryb rekomendacji (personalized/non_personalized)."
+      "meaning_pl": "Tryb rekomendacji (personalized/non_personalized).",
+      "domain": "e-commerce"
     },
-
     {
       "name": "auction",
       "arity": 1,
       "pred": "auction/1",
-      "signature": ["offer"],
+      "signature": [
+        "offer"
+      ],
       "io": "derived",
       "kind": "domain",
       "meaning_pl": "Oferta jest w trybie aukcji (wynik z mode/2).",
-      "allowed_in": { "head": true, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "buy_now_available",
       "arity": 1,
       "pred": "buy_now_available/1",
-      "signature": ["offer"],
+      "signature": [
+        "offer"
+      ],
       "io": "derived",
       "kind": "ui",
       "meaning_pl": "Opcja Kup Teraz jest dostępna dla oferty (w danym stanie).",
-      "allowed_in": { "head": true, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "eligible_bid_for_contract",
       "arity": 2,
       "pred": "eligible_bid_for_contract/2",
-      "signature": ["offer", "bid"],
+      "signature": [
+        "offer",
+        "bid"
+      ],
       "io": "derived",
       "kind": "decision",
       "meaning_pl": "Bid spełnia warunki, by móc skutkować zawarciem umowy (np. >= min_price).",
-      "allowed_in": { "head": true, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "e-commerce"
     },
     {
       "name": "auction_quantity_ok",
       "arity": 1,
       "pred": "auction_quantity_ok/1",
-      "signature": ["offer"],
+      "signature": [
+        "offer"
+      ],
       "io": "derived",
       "kind": "decision",
       "meaning_pl": "Walidacja: w aukcji liczba sztuk jest zgodna (np. = 1).",
-      "allowed_in": { "head": true, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "e-commerce"
     },
-
     {
       "name": "ge",
       "arity": 2,
       "pred": "ge/2",
-      "signature": ["decimal", "decimal"],
+      "signature": [
+        "decimal",
+        "decimal"
+      ],
       "io": "both",
       "kind": "builtin",
       "meaning_pl": "Wbudowane porównanie: A >= B.",
-      "allowed_in": { "head": false, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": false,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "generic"
     },
     {
       "name": "gt",
       "arity": 2,
       "pred": "gt/2",
-      "signature": ["decimal", "decimal"],
+      "signature": [
+        "decimal",
+        "decimal"
+      ],
       "io": "both",
       "kind": "builtin",
       "meaning_pl": "Wbudowane porównanie: A > B.",
-      "allowed_in": { "head": false, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": false,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "generic"
     },
     {
       "name": "le",
       "arity": 2,
       "pred": "le/2",
-      "signature": ["decimal", "decimal"],
+      "signature": [
+        "decimal",
+        "decimal"
+      ],
       "io": "both",
       "kind": "builtin",
       "meaning_pl": "Wbudowane porównanie: A <= B.",
-      "allowed_in": { "head": false, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": false,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "generic"
     },
     {
       "name": "lt",
       "arity": 2,
       "pred": "lt/2",
-      "signature": ["decimal", "decimal"],
+      "signature": [
+        "decimal",
+        "decimal"
+      ],
       "io": "both",
       "kind": "builtin",
       "meaning_pl": "Wbudowane porównanie: A < B.",
-      "allowed_in": { "head": false, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": false,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "generic"
     },
     {
       "name": "eq",
       "arity": 2,
       "pred": "eq/2",
-      "signature": ["any", "any"],
+      "signature": [
+        "any",
+        "any"
+      ],
       "io": "both",
       "kind": "builtin",
       "meaning_pl": "Wbudowane porównanie: A = B.",
-      "allowed_in": { "head": false, "body": true, "negated_body": false }
+      "allowed_in": {
+        "head": false,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "generic"
+    },
+
+    {
+      "name": "event",
+      "arity": 1,
+      "pred": "event/1",
+      "signature": [
+        "event"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja wydarzenia (szkolenia / spotkania w cyklu).",
+      "domain": "event"
+    },
+    {
+      "name": "training_series",
+      "arity": 1,
+      "pred": "training_series/1",
+      "signature": [
+        "training_series"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja cyklu szkoleń (np. Akademia Managera edycja N).",
+      "domain": "event"
+    },
+    {
+      "name": "registration",
+      "arity": 1,
+      "pred": "registration/1",
+      "signature": [
+        "registration"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja zgłoszenia uczestnictwa w wydarzeniu.",
+      "domain": "event"
+    },
+    {
+      "name": "event_in_series",
+      "arity": 2,
+      "pred": "event_in_series/2",
+      "signature": [
+        "event",
+        "training_series"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Wydarzenie jest modułem danego cyklu szkoleń.",
+      "domain": "event"
+    },
+    {
+      "name": "event_date",
+      "arity": 2,
+      "pred": "event_date/2",
+      "signature": [
+        "event",
+        "time"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Termin (data i godzina) wydarzenia.",
+      "domain": "event"
+    },
+    {
+      "name": "event_platform",
+      "arity": 2,
+      "pred": "event_platform/2",
+      "signature": [
+        "event",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Platforma cyfrowa, na której odbywa się wydarzenie (np. Clickmeeting).",
+      "domain": "event"
+    },
+    {
+      "name": "event_capacity",
+      "arity": 2,
+      "pred": "event_capacity/2",
+      "signature": [
+        "event",
+        "int"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Maksymalna liczba miejsc na wydarzenie (0 = brak limitu).",
+      "domain": "event"
+    },
+    {
+      "name": "event_cancelled",
+      "arity": 1,
+      "pred": "event_cancelled/1",
+      "signature": [
+        "event"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Organizator odwołał wydarzenie (siła wyższa, choroba prelegenta, problemy techniczne).",
+      "domain": "event"
+    },
+    {
+      "name": "series_module_count",
+      "arity": 2,
+      "pred": "series_module_count/2",
+      "signature": [
+        "training_series",
+        "int"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Łączna liczba modułów głównych w cyklu szkoleń.",
+      "domain": "event"
+    },
+    {
+      "name": "registration_for",
+      "arity": 2,
+      "pred": "registration_for/2",
+      "signature": [
+        "registration",
+        "event"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Zgłoszenie dotyczy konkretnego wydarzenia / cyklu.",
+      "domain": "event"
+    },
+    {
+      "name": "registrant",
+      "arity": 2,
+      "pred": "registrant/2",
+      "signature": [
+        "registration",
+        "user"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Osoba, która złożyła zgłoszenie uczestnictwa.",
+      "domain": "event"
+    },
+    {
+      "name": "registration_date",
+      "arity": 2,
+      "pred": "registration_date/2",
+      "signature": [
+        "registration",
+        "time"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Data złożenia zgłoszenia (decyduje o kolejności — art. 15).",
+      "domain": "event"
+    },
+    {
+      "name": "registration_status",
+      "arity": 2,
+      "pred": "registration_status/2",
+      "signature": [
+        "registration",
+        "enum"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Status zgłoszenia: pending / confirmed / rejected / cancelled.",
+      "value_domain": {
+        "enum_arg_index": 2,
+        "allowed_values": ["pending", "confirmed", "rejected", "cancelled"]
+      },
+      "domain": "event"
+    },
+    {
+      "name": "attendance_confirmed",
+      "arity": 2,
+      "pred": "attendance_confirmed/2",
+      "signature": [
+        "user",
+        "event"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Obecność użytkownika na module potwierdzona listą obecności.",
+      "domain": "event"
+    },
+    {
+      "name": "test_passed",
+      "arity": 2,
+      "pred": "test_passed/2",
+      "signature": [
+        "user",
+        "event"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Użytkownik zaliczył test po module (min. 3 poprawne odpowiedzi z testu kończącego moduł).",
+      "domain": "event"
+    },
+    {
+      "name": "has_previous_certificate",
+      "arity": 2,
+      "pred": "has_previous_certificate/2",
+      "signature": [
+        "user",
+        "training_series"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Użytkownik posiada zaświadczenie z poprzedniej edycji cyklu — wyklucza z uczestnictwa (art. 6).",
+      "domain": "event"
+    },
+    {
+      "name": "modules_attended",
+      "arity": 3,
+      "pred": "modules_attended/3",
+      "signature": [
+        "user",
+        "training_series",
+        "int"
+      ],
+      "io": "derived",
+      "kind": "condition",
+      "meaning_pl": "Liczba modułów głównych, w których użytkownik miał obecność i zaliczony test.",
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "event"
+    },
+    {
+      "name": "eligible_to_register",
+      "arity": 2,
+      "pred": "eligible_to_register/2",
+      "signature": [
+        "user",
+        "event"
+      ],
+      "io": "derived",
+      "kind": "decision",
+      "meaning_pl": "Użytkownik spełnia warunki uczestnictwa: ma konto, brak zaświadczenia z poprzedniej edycji, wolne miejsca (art. 13, 15, 16).",
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "event"
+    },
+    {
+      "name": "eligible_for_certificate",
+      "arity": 2,
+      "pred": "eligible_for_certificate/2",
+      "signature": [
+        "user",
+        "training_series"
+      ],
+      "io": "derived",
+      "kind": "decision",
+      "meaning_pl": "Użytkownik spełnia warunki do zaświadczenia: obecność i test w min. 8 z 9 modułów głównych (art. 18).",
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "event"
+    },
+    {
+      "name": "certificate_issued",
+      "arity": 2,
+      "pred": "certificate_issued/2",
+      "signature": [
+        "user",
+        "training_series"
+      ],
+      "io": "derived",
+      "kind": "decision",
+      "meaning_pl": "Zaświadczenie o ukończeniu cyklu szkoleń zostało wydane uczestnikowi (art. 17).",
+      "allowed_in": {
+        "head": true,
+        "body": true,
+        "negated_body": false
+      },
+      "domain": "event"
     }
   ]
 }

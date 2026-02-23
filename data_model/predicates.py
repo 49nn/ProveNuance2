@@ -40,6 +40,9 @@ class ArgType(StrEnum):
     DISCUSSION  = "discussion"
     RATING      = "rating"
     MARKETPLACE = "marketplace"
+    EVENT            = "event"
+    TRAINING_SERIES  = "training_series"
+    REGISTRATION     = "registration"
     STRING      = "string"
     INT         = "int"
     DECIMAL     = "decimal"
@@ -79,6 +82,18 @@ class PredicateKind(StrEnum):
     UI        = "ui"
     AUDIT     = "audit"
     BUILTIN   = "builtin"
+
+
+class DomainScope(StrEnum):
+    """
+    Zakres domenowy predykatu — w jakich kontekstach biznesowych ma zastosowanie.
+    - GENERIC:    predykat domenowo-niezależny (user, consent, violates, płatności itp.)
+    - E_COMMERCE: specyficzny dla marketplace / handlu elektronicznego
+    - EVENT:      specyficzny dla zarządzania wydarzeniami / szkoleniami
+    """
+    GENERIC    = "generic"
+    E_COMMERCE = "e-commerce"
+    EVENT      = "event"
 
 
 # ---------------------------------------------------------------------------
@@ -128,6 +143,7 @@ class PredicateSpec:
     - kind:         rola w modelu domeny
     - pred:         wygodne pole: "name/arity" (opcjonalnie)
     - meaning_pl:   krótki opis semantyczny po polsku
+    - domain:       zakres domenowy (generic / e-commerce / event)
     - allowed_in:   gdzie predykat może wystąpić w regułach
     - value_domain: ograniczenia enumeracyjne dla wybranego argumentu
     - notes:        dodatkowe uwagi
@@ -139,6 +155,7 @@ class PredicateSpec:
     kind: PredicateKind
     pred: PredicateArity | None = None
     meaning_pl: str | None = None
+    domain: DomainScope = DomainScope.GENERIC
     allowed_in: AllowedIn = field(default_factory=AllowedIn)
     value_domain: ValueDomain | None = None
     notes: str | None = None

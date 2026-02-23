@@ -75,6 +75,7 @@ def build_predicate_row(p: dict) -> tuple:
         p["io"],
         p["kind"],
         p.get("meaning_pl"),
+        p.get("domain", "generic"),
         _bool(allowed.get("head"),         True),
         _bool(allowed.get("body"),         True),
         _bool(allowed.get("negated_body"), False),
@@ -137,7 +138,7 @@ def run() -> None:
                 cur,
                 """
                 INSERT INTO predicate (
-                    name, arity, pred, signature, io, kind, meaning_pl,
+                    name, arity, pred, signature, io, kind, meaning_pl, domain,
                     allowed_in_head, allowed_in_body, allowed_in_negated_body,
                     value_domain_enum_arg_index, value_domain_allowed_values,
                     notes
@@ -149,6 +150,7 @@ def run() -> None:
                     io                          = EXCLUDED.io,
                     kind                        = EXCLUDED.kind,
                     meaning_pl                  = EXCLUDED.meaning_pl,
+                    domain                      = EXCLUDED.domain,
                     allowed_in_head             = EXCLUDED.allowed_in_head,
                     allowed_in_body             = EXCLUDED.allowed_in_body,
                     allowed_in_negated_body     = EXCLUDED.allowed_in_negated_body,

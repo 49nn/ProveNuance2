@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS predicate (
     io                          predicate_io    NOT NULL,
     kind                        predicate_kind  NOT NULL,
     meaning_pl                  text,
+    domain                      text            NOT NULL DEFAULT 'generic',
 
     -- AllowedIn (embedded)
     allowed_in_head             boolean         NOT NULL DEFAULT true,
@@ -81,12 +82,15 @@ CREATE TABLE IF NOT EXISTS predicate (
         CHECK (
             (value_domain_enum_arg_index IS NULL) =
             (value_domain_allowed_values IS NULL)
-        )
+        ),
+    CONSTRAINT domain_valid
+        CHECK (domain IN ('generic', 'e-commerce', 'event'))
 );
 
--- Indeks pomocniczy do filtrowania po io/kind
-CREATE INDEX IF NOT EXISTS idx_predicate_io   ON predicate (io);
-CREATE INDEX IF NOT EXISTS idx_predicate_kind ON predicate (kind);
+-- Indeks pomocniczy do filtrowania po io/kind/domain
+CREATE INDEX IF NOT EXISTS idx_predicate_io     ON predicate (io);
+CREATE INDEX IF NOT EXISTS idx_predicate_kind   ON predicate (kind);
+CREATE INDEX IF NOT EXISTS idx_predicate_domain ON predicate (domain);
 
 -- ---------------------------------------------------------------------------
 -- document_span
