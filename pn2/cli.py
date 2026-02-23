@@ -18,6 +18,7 @@ Komendy:
   apply-schema  Aplikuje db/schema.sql do bazy danych (idempotentne).
   solve         Uruchamia solver Datalog na regułach z bazy i faktach z JSON.
   extract-document  Ekstrakcja reguł dla wszystkich spanów dokumentu (batch).
+  nlp-solve     Ekstrakcja faktów z tekstu NL, solver Datalog i interpretacja wyników.
 """
 
 from __future__ import annotations
@@ -45,6 +46,7 @@ from pn2.commands import load_manifest as cmd_load_manifest
 from pn2.commands import apply_schema as cmd_apply_schema
 from pn2.commands import solve as cmd_solve
 from pn2.commands import extract_document as cmd_extract_document
+from pn2.commands import nlp_solve as cmd_nlp_solve
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -77,6 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     cmd_apply_schema.add_parser(subparsers)
     cmd_solve.add_parser(subparsers)
     cmd_extract_document.add_parser(subparsers)
+    cmd_nlp_solve.add_parser(subparsers)
 
     return parser
 

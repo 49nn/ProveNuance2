@@ -3,6 +3,7 @@ llm_query/prompt.py — budowanie promptu dla ekstraktora reguł Horn.
 
 Funkcje publiczne:
   fetch_predicates(domain)           -> list[str]
+  fetch_predicates_for_nlp(domain)   -> list[dict]
   fetch_constants(domain)            -> list[str]
   read_conditions(path | None)       -> str
   read_fragment(path | None)         -> str
@@ -46,6 +47,57 @@ def fetch_predicates(domain: str) -> list[str]:
                 (domain,),
             )
         return [row[0] for row in cur.fetchall()]
+
+
+def fetch_predicates_for_nlp(domain: str) -> list[dict]:
+    """
+    Zwraca pełne obiekty predykatów EDB (io != 'derived') dla promptu ekstrakcji NLP.
+
+    Każdy obiekt zawiera: pred, name, arity, signature, meaning_pl
+    oraz opcjonalnie value_domain (gdy predykat ma ograniczony zbiór wartości).
+    Używane przez nlp-solve do przekazania LLM informacji o dostępnych predykatach.
+    """
+    conn = get_connection()
+    with conn, conn.cursor() as cur:
+        if domain == "generic":
+            cur.execute(
+                """
+                SELECT name, arity, pred, signature, meaning_pl,
+                       value_domain_enum_arg_index, value_domain_allowed_values
+                FROM predicate
+                WHERE domain = 'generic' AND io != 'derived'
+                ORDER BY kind, name
+                """
+            )
+        else:
+            cur.execute(
+                """
+                SELECT name, arity, pred, signature, meaning_pl,
+                       value_domain_enum_arg_index, value_domain_allowed_values
+                FROM predicate
+                WHERE (domain = 'generic' OR domain = %s) AND io != 'derived'
+                ORDER BY kind, name
+                """,
+                (domain,),
+            )
+        rows = cur.fetchall()
+
+    result = []
+    for name, arity, pred, signature, meaning_pl, vd_idx, vd_vals in rows:
+        entry: dict = {
+            "pred": pred,
+            "name": name,
+            "arity": arity,
+            "signature": list(signature) if signature else [],
+            "meaning_pl": meaning_pl or "",
+        }
+        if vd_idx is not None and vd_vals:
+            entry["value_domain"] = {
+                "arg_index": vd_idx,
+                "allowed_values": list(vd_vals),
+            }
+        result.append(entry)
+    return result
 
 
 def fetch_constants(domain: str) -> list[str]:
