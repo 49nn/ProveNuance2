@@ -13,7 +13,7 @@ from pn2._db import get_connection
 console = Console()
 
 ROOT             = pathlib.Path(__file__).resolve().parent.parent.parent
-DEFAULT_MANIFEST = ROOT / "_initial data" / "predykaty-manifest.json"
+DEFAULT_MANIFEST = ROOT / "templates-schemas" / "predykaty-manifest.json"
 
 _UPSERT_PREDICATE = """
     INSERT INTO predicate (

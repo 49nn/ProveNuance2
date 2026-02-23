@@ -37,7 +37,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 ROOT          = pathlib.Path(__file__).resolve().parent.parent
-MANIFEST_PATH = ROOT / "_initial data" / "predykaty-manifest.json"
+MANIFEST_PATH = ROOT / "templates-schemas" / "predykaty-manifest.json"
 SCHEMA_PATH   = pathlib.Path(__file__).resolve().parent / "schema.sql"
 
 # ---------------------------------------------------------------------------

@@ -18,8 +18,8 @@ from pn2._db import get_connection
 console = Console(width=200)
 
 _ROOT                = pathlib.Path(__file__).resolve().parent.parent.parent
-EXTRACTOR_TEMPLATE   = _ROOT / "_initial data" / "prompt-nlp-extractor.md"
-INTERPRETER_TEMPLATE = _ROOT / "_initial data" / "prompt-interpreter.md"
+EXTRACTOR_TEMPLATE   = _ROOT / "templates-schemas" / "prompt-nlp-extractor.md"
+INTERPRETER_TEMPLATE = _ROOT / "templates-schemas" / "prompt-interpreter.md"
 
 
 # ---------------------------------------------------------------------------

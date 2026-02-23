@@ -19,7 +19,7 @@ import sys
 from pn2._db import get_connection
 
 ROOT          = pathlib.Path(__file__).resolve().parent.parent
-TEMPLATE_PATH = ROOT / "_initial data" / "prompt-extractor.md"
+TEMPLATE_PATH = ROOT / "templates-schemas" / "prompt-extractor.md"
 
 _EMPTY_CONDITIONS = "{}"
 _EMPTY_FRAGMENT   = "[WKLEJ TU FRAGMENT]"
