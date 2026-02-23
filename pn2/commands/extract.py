@@ -16,6 +16,10 @@ from llm_query import (
     upsert_constants,
     collect_assumptions,
     upsert_assumptions,
+    collect_rules,
+    upsert_rules,
+    collect_conditions,
+    upsert_conditions,
     DEFAULT_MODEL,
 )
 from pn2._db import get_connection
@@ -34,12 +38,27 @@ def _parse_result(raw: str) -> dict | None:
         return None
 
 
+def _save(label: str, items, upsert_fn, conn_factory, domain: str) -> None:
+    """Pomocnicza: upsert z logowaniem błędów."""
+    if not items:
+        print(f"Brak {label} do zapisania.", file=sys.stderr)
+        return
+    try:
+        conn = conn_factory()
+        n = upsert_fn(conn, items, domain)
+        conn.commit()
+        conn.close()
+        print(f"Zapisano {n} {label} (domena: {domain}).", file=sys.stderr)
+    except Exception as e:
+        print(f"[warn] Błąd zapisu {label} do bazy: {e}", file=sys.stderr)
+
+
 def run(args: argparse.Namespace) -> None:
-    conditions = read_conditions(args.conditions)
-    fragment   = read_fragment(args.fragment)
+    conditions_txt = read_conditions(args.conditions)
+    fragment       = read_fragment(args.fragment)
 
     try:
-        prompt = build_prompt(args.domain, conditions, fragment)
+        prompt = build_prompt(args.domain, conditions_txt, fragment)
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
         raise SystemExit(1)
@@ -70,66 +89,56 @@ def run(args: argparse.Namespace) -> None:
     else:
         print(raw)
 
-    # --- odkrywanie stałych ---
     result = _parse_result(raw)
     if result is None:
-        print("[warn] Nie można sparsować JSON — stałe nie zostały zapisane.", file=sys.stderr)
+        print("[warn] Nie można sparsować JSON — dane nie zostały zapisane.", file=sys.stderr)
         return
 
+    domain = args.domain
+
+    # --- reguły ---
+    rules = collect_rules(result)
+    print(f"  reguły ({len(rules)}): {', '.join(r['rule_id'] for r in rules)}", file=sys.stderr)
+    _save("reguł", rules, upsert_rules, get_connection, domain)
+
+    # --- warunki ---
+    conds = collect_conditions(result)
+    if conds:
+        print(f"  warunki ({len(conds)}): {', '.join(c['id'] for c in conds)}", file=sys.stderr)
+    _save("warunków", conds, upsert_conditions, get_connection, domain)
+
+    # --- stałe ---
     constants = collect_constants(result)
-    if not constants:
-        print("Brak nowych stałych do zapisania.", file=sys.stderr)
-        return
+    if constants:
+        from llm_query.constants import _ARITY_0_RE
+        arity0 = {
+            v for v in constants
+            if any(
+                _ARITY_0_RE.match(dp.get("pred", "")) and dp["pred"].startswith(v + "/")
+                for dp in result.get("derived_predicates", [])
+            )
+        }
+        plain = set(constants) - arity0
+        if plain:
+            print(f"  args-stałe ({len(plain)}): {', '.join(sorted(plain))}", file=sys.stderr)
+        if arity0:
+            with_meaning = {v for v in arity0 if constants[v]}
+            print(
+                f"  arity-0 pred ({len(arity0)}): {', '.join(sorted(arity0))}"
+                + (f" [{len(with_meaning)} z opisem]" if with_meaning else ""),
+                file=sys.stderr,
+            )
+    _save("stałych", constants, upsert_constants, get_connection, domain)
 
-    from llm_query.constants import _ARITY_0_RE
-    arity0 = {
-        v for v, _ in constants.items()
-        if any(
-            _ARITY_0_RE.match(dp.get("pred", "")) and dp["pred"].startswith(v + "/")
-            for dp in result.get("derived_predicates", [])
-        )
-    }
-    plain = set(constants) - arity0
-
-    if plain:
-        print(f"  args-stałe ({len(plain)}): {', '.join(sorted(plain))}", file=sys.stderr)
-    if arity0:
-        with_meaning = {v for v in arity0 if constants[v]}
-        print(
-            f"  arity-0 pred ({len(arity0)}): {', '.join(sorted(arity0))}"
-            + (f" [{len(with_meaning)} z opisem]" if with_meaning else ""),
-            file=sys.stderr,
-        )
-
-    try:
-        conn = get_connection()
-        inserted = upsert_constants(conn, constants, args.domain)
-        conn.commit()
-        conn.close()
-        print(f"Zapisano {inserted} nowych stałych (domena: {args.domain}).", file=sys.stderr)
-    except Exception as e:
-        print(f"[warn] Błąd zapisu stałych do bazy: {e}", file=sys.stderr)
-
-    # --- zapisywanie założeń ---
+    # --- założenia ---
     assumptions = collect_assumptions(result)
-    if not assumptions:
-        print("Brak założeń do zapisania.", file=sys.stderr)
-        return
-
-    by_type: dict[str, int] = {}
-    for a in assumptions:
-        by_type[a["type"]] = by_type.get(a["type"], 0) + 1
-    summary = ", ".join(f"{t}={n}" for t, n in sorted(by_type.items()))
-    print(f"  założenia ({len(assumptions)}): {summary}", file=sys.stderr)
-
-    try:
-        conn = get_connection()
-        inserted = upsert_assumptions(conn, assumptions, args.domain)
-        conn.commit()
-        conn.close()
-        print(f"Zapisano {inserted} założeń (domena: {args.domain}).", file=sys.stderr)
-    except Exception as e:
-        print(f"[warn] Błąd zapisu założeń do bazy: {e}", file=sys.stderr)
+    if assumptions:
+        by_type: dict[str, int] = {}
+        for a in assumptions:
+            by_type[a["type"]] = by_type.get(a["type"], 0) + 1
+        summary = ", ".join(f"{t}={n}" for t, n in sorted(by_type.items()))
+        print(f"  założenia ({len(assumptions)}): {summary}", file=sys.stderr)
+    _save("założeń", assumptions, upsert_assumptions, get_connection, domain)
 
 
 def add_parser(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
@@ -140,11 +149,11 @@ def add_parser(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[
         description="""
 Buduje prompt (jak pn2 prompt) i wysyła go do Gemini API.
 Wynik (JSON z regułami Horn) trafia na stdout lub do pliku.
-Po ekstrakcji automatycznie zapisuje odkryte stałe do tabeli constant w bazie.
-
-Stałe są zbierane z dwóch źródeł:
-  1. args w regułach bez prefiksu "?" (np. "confirmed", "auction")
-  2. derived_predicates z arity=0   (np. "is_eligible/0")
+Po ekstrakcji automatycznie zapisuje do bazy:
+  - reguły Horn       → tabela rule
+  - warunki nazwane   → tabela condition
+  - stałe domenowe    → tabela constant
+  - założenia scoped  → tabela assumption
 
 Wymaga zmiennej środowiskowej GEMINI_API_KEY (lub pliku .env).
 

@@ -11,6 +11,10 @@ Publiczne API:
   upsert_constants(conn, constants, domain)       -> int
   collect_assumptions(result)                     -> list[dict]
   upsert_assumptions(conn, assumptions, domain)   -> int
+  collect_rules(result)                           -> list[dict]
+  upsert_rules(conn, rules, domain)               -> int
+  collect_conditions(result)                      -> list[dict]
+  upsert_conditions(conn, conditions, domain)     -> int
 """
 
 from .prompt import (
@@ -23,6 +27,8 @@ from .prompt import (
 from .gemini import call_gemini, DEFAULT_MODEL
 from .constants import collect_constants, upsert_constants
 from .assumptions import collect_assumptions, upsert_assumptions
+from .rules import collect_rules, upsert_rules
+from .conditions_store import collect_conditions, upsert_conditions
 
 __all__ = [
     "build_prompt",
@@ -36,4 +42,8 @@ __all__ = [
     "upsert_constants",
     "collect_assumptions",
     "upsert_assumptions",
+    "collect_rules",
+    "upsert_rules",
+    "collect_conditions",
+    "upsert_conditions",
 ]

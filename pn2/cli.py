@@ -12,7 +12,10 @@ Komendy:
   extract      Wysyła fragment regulaminu do Gemini i zwraca reguły Horn.
   constants    Listuje stałe domenowe odkryte przez ekstraktor.
   assumptions  Listuje założenia (ScopedAssumptions) odkryte przez ekstraktor.
-  apply-schema Aplikuje db/schema.sql do bazy danych (idempotentne).
+  rules        Listuje reguły Horna odkryte przez ekstraktor.
+  conditions   Listuje warunki nazwane (ConditionDefinition) odkryte przez ekstraktor.
+  load-manifest Ładuje manifest predykatów (JSON) do tabeli predicate.
+  apply-schema  Aplikuje db/schema.sql do bazy danych (idempotentne).
 """
 
 from __future__ import annotations
@@ -34,6 +37,9 @@ from pn2.commands import prompt as cmd_prompt
 from pn2.commands import extract as cmd_extract
 from pn2.commands import constants as cmd_constants
 from pn2.commands import assumptions as cmd_assumptions
+from pn2.commands import rules as cmd_rules
+from pn2.commands import conditions as cmd_conditions
+from pn2.commands import load_manifest as cmd_load_manifest
 from pn2.commands import apply_schema as cmd_apply_schema
 
 
@@ -61,6 +67,9 @@ def build_parser() -> argparse.ArgumentParser:
     cmd_extract.add_parser(subparsers)
     cmd_constants.add_parser(subparsers)
     cmd_assumptions.add_parser(subparsers)
+    cmd_rules.add_parser(subparsers)
+    cmd_conditions.add_parser(subparsers)
+    cmd_load_manifest.add_parser(subparsers)
     cmd_apply_schema.add_parser(subparsers)
 
     return parser

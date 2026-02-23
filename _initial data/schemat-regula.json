@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/rule.schema.json",
+  "title": "Rule (reguła Horna)",
+  "description": "Reguła Horna odkrywana przez ekstraktor. Schemat: horn_json_v2_with_scoped_assumptions / $defs/Rule.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "head", "body", "provenance", "assumptions"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_\\-]*$",
+      "description": "Identyfikator reguły, np. 'R1', 'R-auction-qty-1'."
+    },
+    "head": { "$ref": "#/$defs/Atom" },
+    "body": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Atom" },
+      "description": "Lista atomów w ciele reguły (koniunkcja przesłanek)."
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Opcjonalne ograniczenia nie-Hornowskie (preferowane: pusta lista)."
+    },
+    "provenance": { "$ref": "#/$defs/Provenance" },
+    "assumptions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ScopedAssumption" },
+      "description": "Założenia scoped ograniczone do tej reguły. Może być pusta."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Opcjonalne uwagi."
+    }
+  },
+  "$defs": {
+    "Atom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pred", "args"],
+      "properties": {
+        "pred": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Nazwa predykatu bez arności, np. 'delivery_status'."
+        },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Lista argumentów: zmienne zaczynają się od '?', stałe nie."
+        },
+        "negated": {
+          "type": "boolean",
+          "default": false,
+          "description": "Jeśli true — negacja stratified NAF: not pred(args)."
+        }
+      }
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit", "quote"],
+      "properties": {
+        "unit": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Identyfikatory jednostek dokumentu, np. ['3.1(b)']."
+        },
+        "quote": {
+          "type": "string",
+          "maxLength": 400,
+          "description": "Krótki dosłowny cytat (bez parafrazy)."
+        }
+      }
+    },
+    "ScopedAssumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["about", "type", "text"],
+      "properties": {
+        "about": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pred"],
+          "properties": {
+            "pred": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*\\/[1-9][0-9]*$",
+              "description": "Predykat z arnością, np. 'delivery_status/2'."
+            },
+            "atom_index": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "0-based indeks atomu w ciele reguły (opcjonalnie)."
+            },
+            "arg_index": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based indeks argumentu w atomie (opcjonalnie)."
+            },
+            "const": {
+              "type": "string",
+              "description": "Konkretna stała której dotyczy założenie (opcjonalnie)."
+            }
+          }
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "data_contract",
+            "data_semantics",
+            "enumeration",
+            "closed_world",
+            "external_computation",
+            "conflict_resolution",
+            "missing_predicate"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Treść założenia po polsku."
+        }
+      }
+    }
+  }
+}

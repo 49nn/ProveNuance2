@@ -176,3 +176,61 @@ CREATE INDEX IF NOT EXISTS idx_assumption_fragment   ON assumption (fragment_id)
 CREATE INDEX IF NOT EXISTS idx_assumption_about_pred ON assumption (about_pred);
 CREATE INDEX IF NOT EXISTS idx_assumption_type       ON assumption (type);
 CREATE INDEX IF NOT EXISTS idx_assumption_domain     ON assumption (domain);
+
+-- ---------------------------------------------------------------------------
+-- condition
+-- Mapowanie: ConditionDefinition (data_model/conditions.py)
+-- Warunki nazwane odkrywane przez ekstraktor (new_conditions w wyniku).
+--
+-- id jest globalnie unikalny (stable snake_case używany w meets_condition/2).
+-- Re-ekstrakcja: meaning_pl uzupełniane COALESCE; required/optional nadpisywane.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS condition (
+    id              text    PRIMARY KEY,       -- stable snake_case, np. "buyer_active"
+    meaning_pl      text    NOT NULL,
+    required_facts  jsonb   NOT NULL,          -- list[Atom] jako JSON
+    optional_facts  jsonb   NOT NULL DEFAULT '[]',
+    prov_unit       text[]  NOT NULL DEFAULT '{}',
+    prov_quote      text    NOT NULL DEFAULT '',
+    domain          text    NOT NULL DEFAULT 'generic',
+    notes           text,
+
+    CONSTRAINT condition_domain_valid
+        CHECK (domain IN ('generic', 'e-commerce', 'event'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_condition_domain ON condition (domain);
+
+-- ---------------------------------------------------------------------------
+-- rule
+-- Mapowanie: Rule (data_model/rules.py)
+-- Reguły Horna odkrywane przez ekstraktor.
+--
+-- Unikalność: (fragment_id, rule_id).
+-- Re-ekstrakcja tego samego fragmentu → DO UPDATE (nadpisuje head/body/provenance).
+-- head_args i body przechowywane jako JSONB (umożliwia zapytania GIN).
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS rule (
+    id          serial  PRIMARY KEY,
+    fragment_id text    NOT NULL,
+    rule_id     text    NOT NULL,       -- np. "R1", "R-auction-qty-1"
+    head_pred   text    NOT NULL,       -- np. "auction"
+    head_args   jsonb   NOT NULL,       -- list[str], np. ["?O"]
+    body        jsonb   NOT NULL,       -- list[Atom], np. [{"pred":"mode","args":["?O","auction"],"negated":false}]
+    prov_unit   text[]  NOT NULL DEFAULT '{}',
+    prov_quote  text    NOT NULL DEFAULT '',
+    domain      text    NOT NULL DEFAULT 'generic',
+    notes       text,
+
+    UNIQUE (fragment_id, rule_id),
+
+    CONSTRAINT rule_domain_valid
+        CHECK (domain IN ('generic', 'e-commerce', 'event'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_rule_fragment  ON rule (fragment_id);
+CREATE INDEX IF NOT EXISTS idx_rule_head_pred ON rule (head_pred);
+CREATE INDEX IF NOT EXISTS idx_rule_domain    ON rule (domain);
+CREATE INDEX IF NOT EXISTS idx_rule_body_gin  ON rule USING gin (body);

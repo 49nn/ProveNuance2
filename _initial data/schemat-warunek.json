@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/condition.schema.json",
+  "title": "ConditionDefinition (warunek nazwany)",
+  "description": "Nazwany warunek odkrywany przez ekstraktor (new_conditions). Globalnie unikalny po 'id', używany w meets_condition/2. Schemat: horn_json_v2_with_scoped_assumptions / $defs/ConditionDefinition.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "meaning_pl", "required_facts", "provenance", "assumptions"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Stabilny identyfikator w snake_case bez polskich znaków, np. 'buyer_active'."
+    },
+    "meaning_pl": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Krótki opis semantyczny warunku po polsku."
+    },
+    "required_facts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Atom" },
+      "description": "Atomy które MUSZĄ być spełnione, żeby warunek był spełniony."
+    },
+    "optional_facts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Atom" },
+      "default": [],
+      "description": "Atomy które mogą, ale nie muszą być spełnione."
+    },
+    "provenance": { "$ref": "#/$defs/Provenance" },
+    "assumptions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ScopedAssumption" },
+      "description": "Założenia scoped ograniczone do tego warunku. Może być pusta."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Opcjonalne uwagi."
+    }
+  },
+  "$defs": {
+    "Atom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pred", "args"],
+      "properties": {
+        "pred": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "negated": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit", "quote"],
+      "properties": {
+        "unit": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "quote": {
+          "type": "string",
+          "maxLength": 400
+        }
+      }
+    },
+    "ScopedAssumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["about", "type", "text"],
+      "properties": {
+        "about": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pred"],
+          "properties": {
+            "pred": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\/[1-9][0-9]*$" },
+            "atom_index": { "type": "integer", "minimum": 0 },
+            "arg_index": { "type": "integer", "minimum": 1 },
+            "const": { "type": "string" }
+          }
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "data_contract", "data_semantics", "enumeration", "closed_world",
+            "external_computation", "conflict_resolution", "missing_predicate"
+          ]
+        },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
