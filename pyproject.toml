@@ -8,6 +8,16 @@ version = "0.1.0"
 description = "Project scaffold configured for Python launcher and Git workflow"
 readme = "README.md"
 requires-python = ">=3.13"
+dependencies = [
+    "psycopg2-binary>=2.9",
+    "rich>=13.0",
+]
+
+[project.scripts]
+pn2 = "pn2.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["pn2*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
