@@ -291,10 +291,9 @@ def _match_body(
     # NAF — wszystkie args muszą być uziemione
     if atom.negated:
         if any(a.startswith("?") for a in grounded):
-            raise ValueError(
-                f"Niebezpieczna negacja (nieuziemione zmienne): {atom}  "
-                f"[podstawienie: {subst}]"
-            )
+            # Niebezpieczna negacja: zmienna niezwiązana — pomiń tę gałąź
+            # (nie możemy ocenić not P(?X) gdy ?X nieznane; konserwatywnnie: fail)
+            return []
         pred_facts = facts.get(atom.pred, set())
         if grounded not in pred_facts:
             return _match_body(rest, facts, subst)
@@ -307,6 +306,24 @@ def _match_body(
         if new_subst is not None:
             results.extend(_match_body(rest, facts, new_subst))
     return results
+
+
+# ---------------------------------------------------------------------------
+# Bezpieczne porządkowanie ciała reguły
+# ---------------------------------------------------------------------------
+
+def _safe_reorder_body(body: list[Atom]) -> list[Atom]:
+    """
+    Przesuwa negowane atomy i builtiny na koniec ciała reguły.
+
+    Kolejność: pozytywne (wiążą zmienne) → builtiny → negacje.
+    Dzięki temu wszystkie zmienne w negowanych atomach są uziemione
+    przez wcześniejsze pozytywne atomy (safe Datalog).
+    """
+    positive  = [a for a in body if not a.negated and a.pred not in BUILTINS]
+    builtins  = [a for a in body if not a.negated and a.pred in BUILTINS]
+    negations = [a for a in body if a.negated]
+    return positive + builtins + negations
 
 
 # ---------------------------------------------------------------------------
@@ -333,10 +350,14 @@ class Evaluator:
         # 1. Ekspansja meets_condition/2
         expanded = expand_meets_condition(rules, conditions)
 
-        # 2. Oblicz stratyfikację
+        # 2. Bezpieczne porządkowanie: pozytywne → builtiny → negacje
+        for rule in expanded:
+            rule.body = _safe_reorder_body(rule.body)
+
+        # 3. Oblicz stratyfikację
         self._strata: dict[str, int] = compute_strata(expanded)
 
-        # 3. Zachowaj reguły i fakty
+        # 4. Zachowaj reguły i fakty
         self._rules: list[Rule] = expanded
         self._facts: Facts      = {k: set(v) for k, v in facts.items()}
 

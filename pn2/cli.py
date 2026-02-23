@@ -17,6 +17,7 @@ Komendy:
   load-manifest Ładuje manifest predykatów (JSON) do tabeli predicate.
   apply-schema  Aplikuje db/schema.sql do bazy danych (idempotentne).
   solve         Uruchamia solver Datalog na regułach z bazy i faktach z JSON.
+  extract-document  Ekstrakcja reguł dla wszystkich spanów dokumentu (batch).
 """
 
 from __future__ import annotations
@@ -43,6 +44,7 @@ from pn2.commands import conditions as cmd_conditions
 from pn2.commands import load_manifest as cmd_load_manifest
 from pn2.commands import apply_schema as cmd_apply_schema
 from pn2.commands import solve as cmd_solve
+from pn2.commands import extract_document as cmd_extract_document
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -74,6 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
     cmd_load_manifest.add_parser(subparsers)
     cmd_apply_schema.add_parser(subparsers)
     cmd_solve.add_parser(subparsers)
+    cmd_extract_document.add_parser(subparsers)
 
     return parser
 

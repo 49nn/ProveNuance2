@@ -30,7 +30,7 @@ QUERY = """
 
 def _fmt_atom(atom: dict) -> str:
     pred = atom.get("pred", "?")
-    args = atom.get("args", [])
+    args = [str(a) for a in atom.get("args", [])]
     neg  = "not " if atom.get("negated") else ""
     return f"{neg}{pred}({', '.join(args)})"
 
@@ -38,7 +38,7 @@ def _fmt_atom(atom: dict) -> str:
 def _fmt_head(head_pred: str, head_args) -> str:
     if isinstance(head_args, str):
         head_args = json.loads(head_args)
-    return f"{head_pred}({', '.join(head_args)})"
+    return f"{head_pred}({', '.join(str(a) for a in head_args)})"
 
 
 def _fmt_body(body, detail: bool, max_width: int = 100) -> str:
