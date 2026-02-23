@@ -8,6 +8,7 @@ Komendy:
   predicates   Listuje predykaty z bazy danych.
   ingest       Parsuje PDF na spany sekcji i zapisuje do JSON / bazy.
   reset        Usuwa dane z bazy (doc / predicates / rules / conditions / all).
+  prompt       Generuje wypełniony prompt dla ekstraktora reguł Horn.
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ if hasattr(sys.stderr, "reconfigure"):
 from pn2.commands import predicates as cmd_predicates
 from pn2.commands import ingest as cmd_ingest
 from pn2.commands import reset as cmd_reset
+from pn2.commands import prompt as cmd_prompt
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -47,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     cmd_predicates.add_parser(subparsers)
     cmd_ingest.add_parser(subparsers)
     cmd_reset.add_parser(subparsers)
+    cmd_prompt.add_parser(subparsers)
 
     return parser
 

@@ -5,6 +5,8 @@ Jesteś parserem regulaminu do reguł Horn/Datalog. Dostałeś fragment regulami
 
 Nie dodawaj żadnego tekstu poza JSON.
 
+DOMENA: {{DOMAIN}}
+
 CEL:
 - Wyprowadź minimalny zestaw reguł Horn formalizujący semantykę fragmentu.
 - Jeśli musisz użyć meets_condition/2, to:
@@ -15,12 +17,7 @@ CEL:
 ZASADY OGÓLNE:
 1) Dozwolone predykaty:
 - Używaj WYŁĄCZNIE predykatów z listy "allowed_predicates" (poniżej).
-- Jeśli w tekście pojawia się cecha, której nie da się wyrazić specyficznym predykatem, użyj predykatów generycznych:
-  - offer_param(O, Key, Val)
-  - feature_enabled(O, Feature)
-  - available(O, Feature)
-  - visible_to_users(O, Field)
-  - hidden_to_users(O, Field)
+- Jeśli w tekście pojawia się cecha, której nie da się wyrazić żadnym specyficznym predykatem z listy, użyj predykatów ogólnego zastosowania z tej samej listy (np. meets_condition/2, violates/2 lub predykaty parametryczne odpowiednie dla domeny {{DOMAIN}}).
 
 2) Zmienne i stałe:
 - Zmienne zapisuj jako stringi zaczynające się od "?" (np. "?O", "?T", "?D", "?B", "?P", "?Min", "?Q", "?S", "?R").
@@ -63,7 +60,7 @@ ZASADY OGÓLNE:
   - closed_world: założenia NAF/domknięcia świata
   - external_computation: coś liczone poza Horniem (np. kwota wg tabeli)
   - conflict_resolution: rozstrzyganie sprzecznych wniosków
-  - missing_predicate: obejście braku predykatu (np. transakcja parametry jako offer_param)
+  - missing_predicate: obejście braku predykatu
 
 6) Minimalizm i spójność:
 - Twórz możliwie mało reguł, ale tak, żeby zachować sens fragmentu.
@@ -125,25 +122,7 @@ WYJŚCIE — WYMAGANY FORMAT JSON:
 }
 
 LISTA DOZWOLONYCH PREDYKATÓW (allowed_predicates):
-[
-  "user/1","account/1","has_account/2","account_status/2","role/2","marketplace/1","in_marketplace/2",
-  "offer/1","offer_status/2","seller_of_offer/2","category/2","item/1","offer_item/2","product/1","linked_to_product/2","offer_param/3",
-  "mode/2","fixed_price/2","quantity/2","feature_enabled/2","min_price/2","visible_to_users/2","hidden_to_users/2",
-  "bid/1","bid_in_offer/2","bidder_of_bid/2","bid_price/2","bid_time/2","bid_state/2",
-  "transaction/1","transaction_for_offer/2","party/3","concluded_via/2","winning_bid/2","transaction_status/2",
-  "payment/1","payment_for_transaction/2","payment_method/2","payment_status/2","payment_deadline/2",
-  "delivery/1","delivery_for_transaction/2","delivery_method/2","delivery_status/2","tracking_number/2",
-  "is_prohibited_item/2","is_conditionally_allowed_item/2","meets_condition/2","violates/2",
-  "moderation_action/2","applied_to/2","action_reason/2","restriction/3",
-  "fee_event/1","fee_for_account/2","fee_type/2","fee_amount/2","fee_status/2",
-  "complaint/1","complaint_by/2","complaint_about/2","complaint_status/2",
-  "appeal/1","appeal_of/2","appeal_status/2",
-  "discussion/1","discussion_about/2",
-  "rating/1","rating_about/2","rating_by/2","rating_value/2","rating_status/2",
-  "consent/3","recommendation_mode/2",
-  "auction/1","buy_now_available/1","eligible_bid_for_contract/2","auction_quantity_ok/1",
-  "ge/2","gt/2","le/2","lt/2","eq/2"
-]
+{{ALLOWED_PREDICATES}}
 
 TERAZ:
 - Wczytaj condition_dictionary z wejścia.
@@ -153,9 +132,9 @@ TERAZ:
 - Nie dodawaj żadnego tekstu poza JSON.
 
 WEJŚCIE:
-- condition_dictionary: <<<WKLEJONY JSON SŁOWNIKA WARUNKÓW>>>
+- condition_dictionary: {{CONDITION_DICTIONARY}}
 - fragment regulaminu:
 <<<
-[WKLEJ TU FRAGMENT]
+{{FRAGMENT}}
 >>>
 ```
