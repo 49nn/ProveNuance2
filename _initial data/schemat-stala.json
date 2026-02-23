@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/constants_manifest.schema.json",
+  "title": "Constants manifest (discovered domain constants / ground terms)",
+  "description": "Stałe domenowe odkrywane przez ekstraktor reguł Horn. Źródła: (1) args w regułach bez '?', (2) derived_predicates z arity=0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "constants"],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "constants_manifest_v1"
+    },
+    "constants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ConstantSpec" }
+    }
+  },
+  "$defs": {
+    "ConstantSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Wartość stałej, np. 'confirmed', 'auction', 'is_free'."
+        },
+        "meaning_pl": {
+          "type": "string",
+          "description": "Krótki opis semantyczny po polsku. Dla arity-0 derived_predicates — z pola 'meaning' odpowiedzi modelu."
+        },
+        "domain": {
+          "type": "string",
+          "enum": ["generic", "e-commerce", "event"],
+          "default": "generic",
+          "description": "Zakres domenowy: generic / e-commerce / event."
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -83,6 +83,22 @@ def _reset_conditions(cur) -> None:
         _skipped("condition")
 
 
+def _reset_constants(cur) -> None:
+    if _table_exists(cur, "constant"):
+        cur.execute("DELETE FROM constant")
+        _deleted(cur.rowcount, "constant")
+    else:
+        _skipped("constant")
+
+
+def _reset_assumptions(cur) -> None:
+    if _table_exists(cur, "assumption"):
+        cur.execute("DELETE FROM assumption")
+        _deleted(cur.rowcount, "assumption")
+    else:
+        _skipped("assumption")
+
+
 # ---------------------------------------------------------------------------
 # Główna logika
 # ---------------------------------------------------------------------------
@@ -111,11 +127,17 @@ def run(args: argparse.Namespace) -> None:
             _reset_rules(cur)
         elif cel == "conditions":
             _reset_conditions(cur)
+        elif cel == "constants":
+            _reset_constants(cur)
+        elif cel == "assumptions":
+            _reset_assumptions(cur)
         elif cel == "all":
             _reset_doc(cur, doc_id)
             _reset_predicates(cur)
             _reset_rules(cur)
             _reset_conditions(cur)
+            _reset_constants(cur)
+            _reset_assumptions(cur)
 
     console.print("[dim]Gotowe.[/dim]")
 
@@ -138,6 +160,8 @@ Cele:
   predicates   Czyści predykaty i manifest_policy.
   rules        Czyści reguły (gdy tabela istnieje).
   conditions   Czyści warunki (gdy tabela istnieje).
+  constants    Czyści stałe domenowe (gdy tabela istnieje).
+  assumptions  Czyści założenia scoped (gdy tabela istnieje).
   all          Wykonuje wszystkie powyższe.
 
 Przykłady:
@@ -151,8 +175,8 @@ Przykłady:
     p.add_argument(
         "cel",
         metavar="CEL",
-        choices=["doc", "predicates", "rules", "conditions", "all"],
-        help="Co usunąć: doc | predicates | rules | conditions | all",
+        choices=["doc", "predicates", "rules", "conditions", "constants", "assumptions", "all"],
+        help="Co usunąć: doc | predicates | rules | conditions | constants | assumptions | all",
     )
     p.add_argument(
         "--doc-id",

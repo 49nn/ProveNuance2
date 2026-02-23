@@ -22,6 +22,8 @@ ZASADY OGÓLNE:
 2) Zmienne i stałe:
 - Zmienne zapisuj jako stringi zaczynające się od "?" (np. "?O", "?T", "?D", "?B", "?P", "?Min", "?Q", "?S", "?R").
 - Stałe jako stringi bez "?" (np. "auction", "buy_now_only", "allegro_smart", "delivered", "returned_to_seller", "min_price").
+- Preferuj stałe z listy known_constants (poniżej).
+- KAŻDA stała użyta w regułach — zarówno z listy known_constants, jak i nowa — MUSI pojawić się w derived_predicates jako {"pred": "nazwa/0", "meaning": "..."} z wyjaśnieniem znaczenia po polsku. Bez wyjątków.
 - ConditionId musi być stabilny, w snake_case, bez polskich znaków.
 
 3) Reguły Horn:
@@ -123,6 +125,11 @@ WYJŚCIE — WYMAGANY FORMAT JSON:
 
 LISTA DOZWOLONYCH PREDYKATÓW (allowed_predicates):
 {{ALLOWED_PREDICATES}}
+
+LISTA ZNANYCH STAŁYCH (known_constants):
+- Preferuj stałe z poniższej listy, gdy pasują semantycznie do fragmentu.
+- KAŻDA stała użyta w regułach (z listy lub nowa) MUSI mieć wpis w derived_predicates: {"pred": "nazwa/0", "meaning": "..."}. Nie pomijaj żadnej stałej.
+{{KNOWN_CONSTANTS}}
 
 TERAZ:
 - Wczytaj condition_dictionary z wejścia.

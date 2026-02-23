@@ -10,6 +10,7 @@ Moduły:
   rules      — Rule
   predicates — PredicateSpec, DerivedPredicate, ArgType, PredicateIO,
                PredicateKind, DomainScope, AllowedIn, ValueDomain
+  constants  — ConstantSpec
 
 Mapowanie na schemat: horn_json_v2_with_scoped_assumptions
   fragment_id          → str
@@ -49,6 +50,7 @@ from .predicates import (
     PredicateSpec,
     DerivedPredicate,
 )
+from .constants import ConstantSpec
 
 __all__ = [
     # common
@@ -75,4 +77,6 @@ __all__ = [
     "ValueDomain",
     "PredicateSpec",
     "DerivedPredicate",
+    # constants
+    "ConstantSpec",
 ]

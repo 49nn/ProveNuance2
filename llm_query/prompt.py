@@ -3,6 +3,7 @@ llm_query/prompt.py — budowanie promptu dla ekstraktora reguł Horn.
 
 Funkcje publiczne:
   fetch_predicates(domain)           -> list[str]
+  fetch_constants(domain)            -> list[str]
   read_conditions(path | None)       -> str
   read_fragment(path | None)         -> str
   build_prompt(domain, conditions, fragment, template_path) -> str
@@ -41,6 +42,30 @@ def fetch_predicates(domain: str) -> list[str]:
                 SELECT pred FROM predicate
                 WHERE domain = 'generic' OR domain = %s
                 ORDER BY kind, name
+                """,
+                (domain,),
+            )
+        return [row[0] for row in cur.fetchall()]
+
+
+def fetch_constants(domain: str) -> list[str]:
+    """
+    Zwraca listę znanych stałych dla danej domeny.
+    Zawsze dołączane: stałe domain='generic'.
+    Dodatkowo: stałe domain=<domain> (jeśli różny od 'generic').
+    """
+    conn = get_connection()
+    with conn, conn.cursor() as cur:
+        if domain == "generic":
+            cur.execute(
+                "SELECT value FROM constant WHERE domain = 'generic' ORDER BY value"
+            )
+        else:
+            cur.execute(
+                """
+                SELECT value FROM constant
+                WHERE domain = 'generic' OR domain = %s
+                ORDER BY value
                 """,
                 (domain,),
             )
@@ -100,14 +125,17 @@ def build_prompt(
     if not template_path.exists():
         raise FileNotFoundError(f"Brak pliku szablonu: {template_path}")
 
-    predicates   = fetch_predicates(domain)
-    allowed_json = json.dumps(predicates, ensure_ascii=False, indent=2)
-    body         = _load_template(template_path)
+    predicates      = fetch_predicates(domain)
+    allowed_json    = json.dumps(predicates, ensure_ascii=False, indent=2)
+    constants       = fetch_constants(domain)
+    constants_json  = json.dumps(constants, ensure_ascii=False, indent=2)
+    body            = _load_template(template_path)
 
     return (
         body
         .replace("{{DOMAIN}}",               domain)
         .replace("{{ALLOWED_PREDICATES}}",    allowed_json)
+        .replace("{{KNOWN_CONSTANTS}}",       constants_json)
         .replace("{{CONDITION_DICTIONARY}}", conditions)
         .replace("{{FRAGMENT}}",              fragment)
     )

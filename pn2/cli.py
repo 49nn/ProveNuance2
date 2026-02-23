@@ -10,6 +10,9 @@ Komendy:
   reset        Usuwa dane z bazy (doc / predicates / rules / conditions / all).
   prompt       Generuje wypełniony prompt dla ekstraktora reguł Horn.
   extract      Wysyła fragment regulaminu do Gemini i zwraca reguły Horn.
+  constants    Listuje stałe domenowe odkryte przez ekstraktor.
+  assumptions  Listuje założenia (ScopedAssumptions) odkryte przez ekstraktor.
+  apply-schema Aplikuje db/schema.sql do bazy danych (idempotentne).
 """
 
 from __future__ import annotations
@@ -29,6 +32,9 @@ from pn2.commands import ingest as cmd_ingest
 from pn2.commands import reset as cmd_reset
 from pn2.commands import prompt as cmd_prompt
 from pn2.commands import extract as cmd_extract
+from pn2.commands import constants as cmd_constants
+from pn2.commands import assumptions as cmd_assumptions
+from pn2.commands import apply_schema as cmd_apply_schema
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -53,6 +59,9 @@ def build_parser() -> argparse.ArgumentParser:
     cmd_reset.add_parser(subparsers)
     cmd_prompt.add_parser(subparsers)
     cmd_extract.add_parser(subparsers)
+    cmd_constants.add_parser(subparsers)
+    cmd_assumptions.add_parser(subparsers)
+    cmd_apply_schema.add_parser(subparsers)
 
     return parser
 

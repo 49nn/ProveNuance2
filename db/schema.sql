@@ -112,3 +112,67 @@ CREATE TABLE IF NOT EXISTS document_span (
 );
 
 CREATE INDEX IF NOT EXISTS idx_span_doc ON document_span (doc_id);
+
+-- ---------------------------------------------------------------------------
+-- constant
+-- Stałe domenowe odkrywane przez ekstraktor reguł Horn.
+--
+-- Źródła:
+--   1. args w regułach bez prefiksu "?" (np. "confirmed", "auction")
+--   2. derived_predicates z arity=0 (np. "is_eligible/0" → value "is_eligible")
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS constant (
+    value      text  PRIMARY KEY,
+    meaning_pl text,
+    domain     text  NOT NULL DEFAULT 'generic',
+    notes      text,
+
+    CONSTRAINT constant_domain_valid
+        CHECK (domain IN ('generic', 'e-commerce', 'event'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_constant_domain ON constant (domain);
+
+-- ---------------------------------------------------------------------------
+-- assumption
+-- Założenia scoped (ScopedAssumption) odkrywane przez ekstraktor.
+--
+-- Źródła:
+--   rules[*].assumptions          (source_type='rule',      source_id=rule.id)
+--   new_conditions[*].assumptions (source_type='condition', source_id=condition.id)
+--
+-- Unikalność: (fragment_id, source_type, source_id, about_pred, type)
+-- Re-ekstrakcja tego samego fragmentu → DO UPDATE (nadpisuje text i indeksy).
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS assumption (
+    id               serial  PRIMARY KEY,
+    fragment_id      text    NOT NULL,
+    source_type      text    NOT NULL,       -- 'rule' | 'condition'
+    source_id        text    NOT NULL,       -- rule.id lub condition.id
+    about_pred       text    NOT NULL,       -- np. "delivery_status/2"
+    about_atom_index integer,               -- opcjonalne; 0-based indeks atomu w body
+    about_arg_index  integer,               -- opcjonalne; 1-based indeks argumentu w atomie
+    about_const      text,                  -- opcjonalne; konkretna stała
+    type             text    NOT NULL,
+    text             text    NOT NULL,
+    domain           text    NOT NULL DEFAULT 'generic',
+
+    UNIQUE (fragment_id, source_type, source_id, about_pred, type),
+
+    CONSTRAINT assumption_source_type_valid
+        CHECK (source_type IN ('rule', 'condition')),
+    CONSTRAINT assumption_type_valid
+        CHECK (type IN (
+            'data_contract', 'data_semantics', 'enumeration', 'closed_world',
+            'external_computation', 'conflict_resolution', 'missing_predicate'
+        )),
+    CONSTRAINT assumption_domain_valid
+        CHECK (domain IN ('generic', 'e-commerce', 'event'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_assumption_fragment   ON assumption (fragment_id);
+CREATE INDEX IF NOT EXISTS idx_assumption_about_pred ON assumption (about_pred);
+CREATE INDEX IF NOT EXISTS idx_assumption_type       ON assumption (type);
+CREATE INDEX IF NOT EXISTS idx_assumption_domain     ON assumption (domain);

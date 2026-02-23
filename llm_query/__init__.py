@@ -2,11 +2,15 @@
 llm_query — budowanie promptów i integracja z modelami językowymi.
 
 Publiczne API:
-  build_prompt(domain, conditions, fragment) -> str
-  fetch_predicates(domain)                  -> list[str]
-  read_conditions(path)                     -> str
-  read_fragment(path)                       -> str
-  call_gemini(prompt, model, api_key)       -> str
+  build_prompt(domain, conditions, fragment)      -> str
+  fetch_predicates(domain)                        -> list[str]
+  read_conditions(path)                           -> str
+  read_fragment(path)                             -> str
+  call_gemini(prompt, model, api_key)             -> str
+  collect_constants(result)                       -> dict[str, str | None]
+  upsert_constants(conn, constants, domain)       -> int
+  collect_assumptions(result)                     -> list[dict]
+  upsert_assumptions(conn, assumptions, domain)   -> int
 """
 
 from .prompt import (
@@ -17,6 +21,8 @@ from .prompt import (
     TEMPLATE_PATH,
 )
 from .gemini import call_gemini, DEFAULT_MODEL
+from .constants import collect_constants, upsert_constants
+from .assumptions import collect_assumptions, upsert_assumptions
 
 __all__ = [
     "build_prompt",
@@ -26,4 +32,8 @@ __all__ = [
     "TEMPLATE_PATH",
     "call_gemini",
     "DEFAULT_MODEL",
+    "collect_constants",
+    "upsert_constants",
+    "collect_assumptions",
+    "upsert_assumptions",
 ]
