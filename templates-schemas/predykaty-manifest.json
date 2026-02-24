@@ -1514,6 +1514,274 @@
         "negated_body": false
       },
       "domain": "event"
+    },
+
+    {
+      "name": "has_time",
+      "arity": 2,
+      "pred": "has_time/2",
+      "signature": [
+        "entity",
+        "time"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja E ma przypisany czas (data i godzina, ISO 8601). Ogólny predykat dla zdarzeń/dokumentów.",
+      "domain": "generic"
+    },
+    {
+      "name": "has_date",
+      "arity": 2,
+      "pred": "has_date/2",
+      "signature": [
+        "entity",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja E ma przypisaną datę (format YYYY-MM-DD). Ogólny predykat daty.",
+      "domain": "generic"
+    },
+    {
+      "name": "valid_from",
+      "arity": 2,
+      "pred": "valid_from/2",
+      "signature": [
+        "entity",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Data początku obowiązywania/ważności encji (YYYY-MM-DD).",
+      "domain": "generic"
+    },
+    {
+      "name": "valid_until",
+      "arity": 2,
+      "pred": "valid_until/2",
+      "signature": [
+        "entity",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Data końca obowiązywania/ważności encji lub ostateczny termin (YYYY-MM-DD).",
+      "domain": "generic"
+    },
+
+    {
+      "name": "location",
+      "arity": 1,
+      "pred": "location/1",
+      "signature": [
+        "location"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja miejsca/lokalizacji.",
+      "domain": "generic"
+    },
+    {
+      "name": "has_location",
+      "arity": 2,
+      "pred": "has_location/2",
+      "signature": [
+        "entity",
+        "location"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja E odbywa się / jest przypisana do lokalizacji L.",
+      "domain": "generic"
+    },
+    {
+      "name": "location_name",
+      "arity": 2,
+      "pred": "location_name/2",
+      "signature": [
+        "location",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Nazwa miejsca (np. sala konferencyjna, nazwa budynku).",
+      "domain": "generic"
+    },
+    {
+      "name": "location_type",
+      "arity": 2,
+      "pred": "location_type/2",
+      "signature": [
+        "location",
+        "enum"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Typ lokalizacji: online / onsite / hybrid.",
+      "value_domain": {
+        "enum_arg_index": 2,
+        "allowed_values": [
+          "online",
+          "onsite",
+          "hybrid"
+        ]
+      },
+      "domain": "generic"
+    },
+
+    {
+      "name": "address",
+      "arity": 1,
+      "pred": "address/1",
+      "signature": [
+        "address"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja adresu pocztowego.",
+      "domain": "generic"
+    },
+    {
+      "name": "has_address",
+      "arity": 2,
+      "pred": "has_address/2",
+      "signature": [
+        "entity",
+        "address"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Encja E ma przypisany adres A (siedziba, adres dostawy itp.).",
+      "domain": "generic"
+    },
+    {
+      "name": "address_street",
+      "arity": 2,
+      "pred": "address_street/2",
+      "signature": [
+        "address",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Ulica i numer budynku/lokalu adresu.",
+      "domain": "generic"
+    },
+    {
+      "name": "address_city",
+      "arity": 2,
+      "pred": "address_city/2",
+      "signature": [
+        "address",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Miasto adresu.",
+      "domain": "generic"
+    },
+    {
+      "name": "address_postal_code",
+      "arity": 2,
+      "pred": "address_postal_code/2",
+      "signature": [
+        "address",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Kod pocztowy adresu.",
+      "domain": "generic"
+    },
+    {
+      "name": "address_country",
+      "arity": 2,
+      "pred": "address_country/2",
+      "signature": [
+        "address",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Kraj adresu (np. PL, DE, kod ISO 3166-1 alpha-2).",
+      "domain": "generic"
+    },
+
+    {
+      "name": "duration",
+      "arity": 2,
+      "pred": "duration/2",
+      "signature": [
+        "entity",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Czas trwania encji (np. '2h', '30min', 'P1D' wg ISO 8601).",
+      "domain": "generic"
+    },
+    {
+      "name": "duration_minutes",
+      "arity": 2,
+      "pred": "duration_minutes/2",
+      "signature": [
+        "entity",
+        "int"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Czas trwania encji w minutach (liczba całkowita). Użyteczne do porównań arytmetycznych.",
+      "domain": "generic"
+    },
+
+    {
+      "name": "has_email",
+      "arity": 2,
+      "pred": "has_email/2",
+      "signature": [
+        "entity",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Adres e-mail przypisany do encji (osoba, organizacja, konto).",
+      "domain": "generic"
+    },
+    {
+      "name": "has_phone",
+      "arity": 2,
+      "pred": "has_phone/2",
+      "signature": [
+        "entity",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Numer telefonu przypisany do encji.",
+      "domain": "generic"
+    },
+    {
+      "name": "contact",
+      "arity": 3,
+      "pred": "contact/3",
+      "signature": [
+        "entity",
+        "enum",
+        "string"
+      ],
+      "io": "input",
+      "kind": "domain",
+      "meaning_pl": "Dane kontaktowe encji: contact(E, Type, Value). Type: email / phone / fax / website.",
+      "value_domain": {
+        "enum_arg_index": 2,
+        "allowed_values": [
+          "email",
+          "phone",
+          "fax",
+          "website"
+        ]
+      },
+      "domain": "generic"
     }
   ]
 }

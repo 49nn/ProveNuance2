@@ -22,7 +22,7 @@ from typing import Protocol, cast
 
 try:
     from dotenv import load_dotenv
-    load_dotenv(pathlib.Path(__file__).resolve().parent.parent / ".env")
+    load_dotenv(pathlib.Path(__file__).resolve().parent.parent / ".env", override=True)
 except ImportError:
     pass  # python-dotenv opcjonalne; zmienna może być ustawiona w środowisku
 
@@ -121,7 +121,8 @@ def call_gemini(
             if _is_daily_quota(exc):
                 raise RuntimeError(
                     f"Dzienny limit zapytań dla modelu {model} wyczerpany. "
-                    f"Sprawdź plan i billing: https://ai.dev/rate-limit"
+                    f"Sprawdź plan i billing: https://ai.dev/rate-limit\n"
+                    f"Szczegóły API: {exc}"
                 ) from exc
 
             attempt += 1

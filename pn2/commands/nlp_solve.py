@@ -20,6 +20,7 @@ console = Console(width=200)
 _ROOT                = pathlib.Path(__file__).resolve().parent.parent.parent
 EXTRACTOR_TEMPLATE   = _ROOT / "templates-schemas" / "prompt-nlp-extractor.md"
 INTERPRETER_TEMPLATE = _ROOT / "templates-schemas" / "prompt-interpreter.md"
+GOAL_TRANSLATOR_TEMPLATE = _ROOT / "templates-schemas" / "prompt-nlp-goal-translator.md"
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +229,64 @@ def _format_rule_provenance(rules: list, derived_preds: set) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Tłumaczenie celu NL → Datalog
+# ---------------------------------------------------------------------------
+
+def _translate_nlp_goals(
+    domain: str,
+    edb_facts: dict[str, set[tuple]],
+    nlp_goals: list[str],
+    model: str,
+) -> list[str]:
+    """
+    Tłumaczy listę celów w języku naturalnym na cele Datalog.
+    Zwraca listę przetłumaczonych celów (może być krótsza jeśli tłumaczenie się nie powiodło).
+    """
+    from llm_query.prompt import fetch_predicates_for_nlp
+    from llm_query import call_gemini
+
+    if not GOAL_TRANSLATOR_TEMPLATE.exists():
+        raise FileNotFoundError(f"Brak szablonu tłumaczenia celu: {GOAL_TRANSLATOR_TEMPLATE}")
+
+    predicates      = fetch_predicates_for_nlp(domain)
+    predicates_json = json.dumps(predicates, ensure_ascii=False, indent=2)
+
+    # Zbierz znane identyfikatory encji z wyekstrahowanych faktów
+    entities: set[str] = set()
+    for args_set in edb_facts.values():
+        for args_tuple in args_set:
+            entities.update(args_tuple)
+    entities_text = "\n".join(f"  - {e}" for e in sorted(entities)) or "  (brak)"
+
+    body = _load_template(GOAL_TRANSLATOR_TEMPLATE)
+
+    translated: list[str] = []
+    for nlp_goal in nlp_goals:
+        prompt = (
+            body
+            .replace("{{DOMAIN}}",            domain)
+            .replace("{{PREDICATE_CATALOG}}", predicates_json)
+            .replace("{{EXTRACTED_ENTITIES}}", entities_text)
+            .replace("{{NLP_GOAL}}",           nlp_goal)
+        )
+        try:
+            raw = call_gemini(prompt, model=model)
+        except Exception as e:
+            console.print(f"[red]Błąd Gemini API (tłumaczenie celu):[/red] {e}")
+            continue
+        goal_str = raw.strip().splitlines()[0].strip()
+        if goal_str:
+            console.print(
+                f"  [dim]NL:[/dim] \"{nlp_goal}\"  →  [cyan]{goal_str}[/cyan]"
+            )
+            translated.append(goal_str)
+        else:
+            console.print(f"  [yellow][warn] Puste tłumaczenie dla:[/yellow] \"{nlp_goal}\"")
+
+    return translated
+
+
+# ---------------------------------------------------------------------------
 # Budowanie promptu interpretacji
 # ---------------------------------------------------------------------------
 
@@ -354,6 +413,29 @@ def run(args: argparse.Namespace) -> None:
         else:
             console.print("  [yellow]Brak wyekstrahowanych faktów.[/yellow]")
 
+    # ── Faza 1.5: Tłumaczenie celów NL → Datalog ──────────────────────────
+
+    nlp_goals_raw: list[str] = getattr(args, "nlp_goal", None) or []
+    if nlp_goals_raw:
+        console.print(
+            f"\n[bold cyan]Faza 1.5:[/bold cyan] Tłumaczenie "
+            f"{len(nlp_goals_raw)} cel(e/ów) NL → Datalog "
+            f"([dim]{extract_model}[/dim])"
+        )
+        try:
+            translated_goals = _translate_nlp_goals(
+                domain    = file_domain,
+                edb_facts = edb_facts,
+                nlp_goals = nlp_goals_raw,
+                model     = extract_model,
+            )
+        except FileNotFoundError as e:
+            console.print(f"[red]{e}[/red]")
+            raise SystemExit(1)
+        # Dołącz przetłumaczone cele do celów podanych bezpośrednio
+        existing_goals: list[str] = args.goal or []
+        args.goal = existing_goals + translated_goals
+
     # ── Faza 2: Solver Datalog ─────────────────────────────────────────────
 
     console.print(f"\n[bold cyan]Faza 2:[/bold cyan] Solver Datalog")
@@ -468,16 +550,10 @@ def run(args: argparse.Namespace) -> None:
         console.print(f"[yellow][warn] Błąd Gemini API (interpretacja):[/yellow] {e}")
         return
 
-    # Interpretacja to narracja — nie JSON; drukujemy bezpośrednio.
-    # Normalizujemy końce linii (API może zwracać \r\n), scalamy pojedyncze
-    # złamania wiersza w obrębie akapitu w spację, zachowując granice akapitów.
-    import re
+    # Interpretacja to narracja w Markdown — renderujemy przez Rich.
+    from rich.markdown import Markdown
     text = raw_interp.strip().replace("\r\n", "\n").replace("\r", "\n")
-    paragraphs = re.split(r"\n{2,}", text)
-    normalized = "\n\n".join(
-        re.sub(r"\n+", " ", p.strip()) for p in paragraphs if p.strip()
-    )
-    console.print(normalized, markup=False, highlight=False)
+    console.print(Markdown(text))
 
 
 # ---------------------------------------------------------------------------
@@ -497,7 +573,9 @@ Trójfazowy pipeline NLP → Datalog → NL:
 
 Przykłady:
   pn2 nlp-solve --text "Jan Kowalski zarejestrował się na Akademię Managera..." --domain event
-  pn2 nlp-solve -f opis_sprawy.txt --domain event --goal "registration_status(?R, 'confirmed')"
+  pn2 nlp-solve -f opis_sprawy.txt --domain event --goal "registration_status(?R, confirmed)"
+  pn2 nlp-solve -f opis_sprawy.txt --domain event --nlp-goal "czy rejestracja jest potwierdzona?"
+  pn2 nlp-solve -f opis_sprawy.txt --domain event -G "kto jest uprawniony do udziału?"
   echo "..." | pn2 nlp-solve --domain event --show-extracted-facts
   pn2 nlp-solve --text "..." --domain event --no-interpret --show-strata
         """,
@@ -524,7 +602,14 @@ Przykłady:
         "--goal", "-g",
         metavar="CEL",
         action="append",
-        help="Cel zapytania, np. 'registration_status(?R, confirmed)'. Można podać wielokrotnie.",
+        help="Cel zapytania w składni Datalog, np. 'registration_status(?R, confirmed)'. Można podać wielokrotnie.",
+    )
+    p.add_argument(
+        "--nlp-goal", "-G",
+        metavar="CEL_NL",
+        action="append",
+        dest="nlp_goal",
+        help="Cel zapytania w języku naturalnym (tłumaczony przez LLM na Datalog). Można podać wielokrotnie.",
     )
     p.add_argument(
         "--fragment",

@@ -55,6 +55,22 @@ def _fmt_body(body, detail: bool, max_width: int = 100) -> str:
     return joined
 
 
+def _fmt_rule_horn(head_pred: str, head_args, body) -> str:
+    head = _fmt_head(head_pred, head_args)
+    if isinstance(body, str):
+        body = json.loads(body)
+    if not body:
+        return f"{head}."
+    atoms = ", ".join(_fmt_atom(a) for a in body)
+    return f"{head} :-\n  {atoms}."
+
+
+def _print_horn(rows: list) -> None:
+    import sys
+    for fragment_id, rule_id, head_pred, head_args, body, domain, notes in rows:
+        print(_fmt_rule_horn(head_pred, head_args, body), file=sys.stdout)
+
+
 def run(args: argparse.Namespace) -> None:
     conditions: list[str] = []
 
@@ -85,6 +101,10 @@ def run(args: argparse.Namespace) -> None:
 
     if not rows:
         console.print("[yellow]Brak reguł spełniających kryteria.[/yellow]")
+        return
+
+    if getattr(args, "horn", False):
+        _print_horn(rows)
         return
 
     table = Table(
@@ -156,5 +176,10 @@ Przykłady:
         "--detail",
         action="store_true",
         help="Wyświetl pełne ciało reguły (każdy atom w osobnej linii).",
+    )
+    p.add_argument(
+        "--horn",
+        action="store_true",
+        help="Wypisz reguły w składni Horn (head :- body.) bez tabelki.",
     )
     p.set_defaults(func=run)

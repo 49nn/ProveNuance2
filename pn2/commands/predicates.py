@@ -62,6 +62,15 @@ def _allowed_flags(head: bool, body: bool, neg: bool) -> str:
     return "/".join(parts) if parts else "-"
 
 
+def _print_horn(rows: list) -> None:
+    """Wypisuje predykaty jako deklaracje Horn (plain text, stdout)."""
+    import sys
+    for row in rows:
+        name, arity, pred, signature, *_ = row
+        args_str = ", ".join(signature) if signature else ""
+        print(f"{name}({args_str}).", file=sys.stdout)
+
+
 def run(args: argparse.Namespace) -> None:
     # Buduj WHERE
     conditions: list[str] = []
@@ -91,6 +100,10 @@ def run(args: argparse.Namespace) -> None:
 
     if not rows:
         console.print("[yellow]Brak predykatów spełniających kryteria.[/yellow]")
+        return
+
+    if getattr(args, "horn", False):
+        _print_horn(rows)
         return
 
     naf_set: set[str] = set(rows[0][11]) if rows[0][11] else set()
@@ -184,5 +197,10 @@ Kolumny:
         "--search", "-s",
         metavar="TEKST",
         help="Szukaj w nazwie lub opisie (ILIKE).",
+    )
+    p.add_argument(
+        "--horn",
+        action="store_true",
+        help="Wypisz predykaty jako deklaracje Horn (name(arg1, arg2, ...).) bez tabelki.",
     )
     p.set_defaults(func=run)
