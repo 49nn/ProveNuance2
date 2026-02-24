@@ -201,6 +201,33 @@ def _format_derived_for_llm(
 
 
 # ---------------------------------------------------------------------------
+# Formatowanie proweniencji reguł dla promptu interpretacji
+# ---------------------------------------------------------------------------
+
+def _format_rule_provenance(rules: list, derived_preds: set) -> str:
+    """
+    Buduje blok proweniencji dla reguł, których głowa należy do
+    faktycznie wyprowadzonych predykatów. Pomija reguły bez cytatu.
+
+    Format każdego wpisu:
+        [R1] eligible_bidder — §3.1(b), §3.2
+          "Uprawniony jest każdy zarejestrowany uczestnik..."
+    """
+    lines: list[str] = []
+    for rule in rules:
+        if rule.head_pred not in derived_preds:
+            continue
+        quote = (rule.prov_quote or "").strip()
+        if not quote:
+            continue
+        units_str = ", ".join(f"§{u}" for u in rule.prov_unit) if rule.prov_unit else "§?"
+        lines.append(f"[{rule.rule_id}] {rule.head_pred} — {units_str}")
+        lines.append(f'  "{quote}"')
+        lines.append("")
+    return "\n".join(lines).rstrip() if lines else "  (brak proweniencji)"
+
+
+# ---------------------------------------------------------------------------
 # Budowanie promptu interpretacji
 # ---------------------------------------------------------------------------
 
@@ -210,6 +237,7 @@ def _build_interpretation_prompt(
     extracted_facts_json: str,
     derived_facts_text: str,
     goal_results_text: str,
+    provenance_text: str = "",
 ) -> str:
     """Buduje prompt interpretacji wyników solvera."""
     from llm_query.prompt import fetch_predicates_for_nlp
@@ -223,12 +251,13 @@ def _build_interpretation_prompt(
 
     return (
         body
-        .replace("{{DOMAIN}}",           domain)
+        .replace("{{DOMAIN}}",            domain)
         .replace("{{PREDICATE_CATALOG}}", predicates_json)
-        .replace("{{ORIGINAL_TEXT}}",    original_text)
-        .replace("{{EXTRACTED_FACTS}}",  extracted_facts_json)
-        .replace("{{DERIVED_FACTS}}",    derived_facts_text)
-        .replace("{{GOAL_RESULTS}}",     goal_results_text)
+        .replace("{{ORIGINAL_TEXT}}",     original_text)
+        .replace("{{EXTRACTED_FACTS}}",   extracted_facts_json)
+        .replace("{{DERIVED_FACTS}}",     derived_facts_text)
+        .replace("{{RULE_PROVENANCE}}",   provenance_text or "  (brak proweniencji)")
+        .replace("{{GOAL_RESULTS}}",      goal_results_text)
     )
 
 
@@ -403,6 +432,14 @@ def run(args: argparse.Namespace) -> None:
     derived_text, goals_text = _format_derived_for_llm(all_facts, edb_facts, goal_results)
     extracted_facts_json = json.dumps(extracted.get("facts", []), ensure_ascii=False, indent=2)
 
+    # Predykaty faktycznie wyprowadzone przez solver (IDB \ EDB)
+    derived_preds: set[str] = {
+        pred
+        for pred, args_set in all_facts.items()
+        if args_set - edb_facts.get(pred, set())
+    }
+    provenance_text = _format_rule_provenance(rules, derived_preds)
+
     try:
         interp_prompt = _build_interpretation_prompt(
             domain               = file_domain,
@@ -410,6 +447,7 @@ def run(args: argparse.Namespace) -> None:
             extracted_facts_json = extracted_facts_json,
             derived_facts_text   = derived_text,
             goal_results_text    = goals_text,
+            provenance_text      = provenance_text,
         )
     except Exception as e:
         console.print(f"[yellow][warn] Błąd budowania promptu interpretacji:[/yellow] {e}")

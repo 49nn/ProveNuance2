@@ -35,7 +35,7 @@ except ImportError as _exc:
     ) from _exc
 
 
-DEFAULT_MODEL  = "gemini-2.5-flash-lite"
+DEFAULT_MODEL  = "gemini-2.5-flash"
 DEFAULT_RETRIES = 3
 _ENV_KEY        = "GEMINI_API_KEY"
 

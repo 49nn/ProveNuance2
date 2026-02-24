@@ -15,6 +15,9 @@ FAKTY WEJŚCIOWE (EDB — to, co wiemy o sprawie):
 FAKTY WYPROWADZONE PRZEZ SOLVER (IDB — wnioski systemu):
 {{DERIVED_FACTS}}
 
+PROWENIENCJA REGUŁ (cytaty z oryginalnego dokumentu, które uzasadniają wyprowadzone wnioski):
+{{RULE_PROVENANCE}}
+
 WYNIKI ZAPYTAŃ UŻYTKOWNIKA:
 {{GOAL_RESULTS}}
 
@@ -25,11 +28,12 @@ Na podstawie powyższych danych napisz zwięzłe wyjaśnienie w języku polskim:
 2. Co te wnioski oznaczają w praktyce (interpretacja semantyczna, nie techniczna)?
 3. Jeśli sekcja "WYNIKI ZAPYTAŃ UŻYTKOWNIKA" zawiera wyniki (tzn. nie jest "(nie podano zapytań)") — dla każdego zapytania wyjaśnij: co pytanie oznacza, co zwrócił solver (PRAWDA/FAŁSZ oraz jakie obiekty spełniają warunek) i co to oznacza praktycznie dla opisanej sprawy.
 4. Jeśli system nie wyprowadził żadnych nowych faktów — wyjaśnij co to oznacza (np. żadne reguły nie miały zastosowania, brak spełnionych warunków).
+5. Dla każdego kluczowego wniosku, jeśli sekcja PROWENIENCJA REGUŁ zawiera pasujący cytat, powołaj się na niego w formacie: [§jednostka: "fragment cytatu"].
 
 STYL:
 - Pisz po polsku, jasno i zwięźle.
 - Używaj nazw z opisu przypadku (np. imiona osób), nie identyfikatorów technicznych (np. "jan_kowalski" → "Jan Kowalski").
 - Znaczenia predykatów znajdziesz w PREDICATE_CATALOG (pole meaning_pl).
-- NIE cytuj surowych faktów Datalog — parafrazuj ich znaczenie.
+- NIE cytuj surowych faktów Datalog — parafrazuj ich znaczenie. Cytuj wyłącznie fragmenty z sekcji PROWENIENCJA REGUŁ, używając formatu [§jednostka: "cytat"].
 - Format: ciągła narracja, bez JSON, bez tabel technicznych.
 ```

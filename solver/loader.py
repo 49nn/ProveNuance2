@@ -96,14 +96,14 @@ def load_rules_from_db(
         params.append(fragment_id)
 
     where = ("WHERE " + " AND ".join(wheres)) if wheres else ""
-    sql   = f"SELECT rule_id, fragment_id, head_pred, head_args, body FROM rule {where} ORDER BY id"
+    sql   = f"SELECT rule_id, fragment_id, head_pred, head_args, body, prov_unit, prov_quote FROM rule {where} ORDER BY id"
 
     with conn.cursor() as cur:
         cur.execute(sql, params)
         rows = cur.fetchall()
 
     rules: list[Rule] = []
-    for rule_id, frag_id, head_pred, head_args_raw, body_raw in rows:
+    for rule_id, frag_id, head_pred, head_args_raw, body_raw, prov_unit_raw, prov_quote_raw in rows:
         # psycopg2 zwraca JSONB jako obiekty Python; fallback na json.loads dla str
         if isinstance(head_args_raw, str):
             head_args_list = json.loads(head_args_raw)
@@ -115,12 +115,18 @@ def load_rules_from_db(
         else:
             body_list = body_raw or []
 
+        # prov_unit to text[] — psycopg2 zwraca list; fallback na pustą listę
+        prov_unit: list[str] = list(prov_unit_raw) if prov_unit_raw else []
+        prov_quote: str      = prov_quote_raw or ""
+
         rules.append(Rule(
             rule_id=rule_id,
             fragment_id=frag_id,
             head_pred=head_pred,
             head_args=tuple(str(a) for a in head_args_list),
             body=[_atom_from_dict(d) for d in body_list],
+            prov_unit=prov_unit,
+            prov_quote=prov_quote,
         ))
 
     return rules

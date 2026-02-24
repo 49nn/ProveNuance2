@@ -4,7 +4,7 @@ solver/types.py — podstawowe typy danych solvera Datalog.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field  # noqa: F401 (field used below)
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,8 @@ class Rule:
     head_pred:   str
     head_args:   tuple[str, ...]
     body:        list[Atom]
+    prov_unit:   list[str] = field(default_factory=list)
+    prov_quote:  str       = ""
 
     def __str__(self) -> str:
         head  = f"{self.head_pred}({', '.join(self.head_args)})"
