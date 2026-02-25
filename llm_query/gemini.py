@@ -13,6 +13,7 @@ Publiczne API:
 
 from __future__ import annotations
 
+import functools
 import os
 import pathlib
 import re
@@ -38,6 +39,16 @@ except ImportError as _exc:
 DEFAULT_MODEL  = "gemini-2.5-flash"
 DEFAULT_RETRIES = 3
 _ENV_KEY        = "GEMINI_API_KEY"
+
+
+@functools.lru_cache(maxsize=4)
+def _get_client(api_key: str) -> "_genai.Client":
+    """Zwraca (i cache'uje) klienta Gemini dla danego klucza API.
+
+    Klient inicjalizuje wewnętrzną pulę HTTP — tworzenie go przy każdym
+    wywołaniu call_gemini() jest kosztowne i wyczerpuje połączenia.
+    """
+    return _genai.Client(api_key=api_key)
 
 # Wzorzec do wyciągnięcia liczby sekund z komunikatu API (np. "retry in 18.8s")
 _RETRY_DELAY_RE = re.compile(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", re.IGNORECASE)
@@ -102,7 +113,7 @@ def call_gemini(
             f"Ustaw zmienną środowiskową {_ENV_KEY} lub przekaż api_key."
         )
 
-    client  = _genai.Client(api_key=key)
+    client  = _get_client(key)
     attempt = 0
 
     while True:

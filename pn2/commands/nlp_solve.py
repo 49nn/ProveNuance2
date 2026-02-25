@@ -287,6 +287,38 @@ def _translate_nlp_goals(
 
 
 # ---------------------------------------------------------------------------
+# Filtrowanie relevantnych predykatów dla celów
+# ---------------------------------------------------------------------------
+
+def _goal_pred_names(goal_results: list[tuple[str, list[dict]]]) -> set[str]:
+    """Wyciąga nazwy predykatów z wyników zapytań (np. 'eligible(?P)' → 'eligible')."""
+    preds: set[str] = set()
+    for goal_str, _ in goal_results:
+        name = goal_str.split("(")[0].strip()
+        if name:
+            preds.add(name)
+    return preds
+
+
+def _relevant_preds_closure(goal_preds: set[str], rules: list) -> set[str]:
+    """
+    Domknięcie wsteczne: zbiera wszystkie predykaty, które bezpośrednio lub
+    pośrednio przyczyniają się do wyprowadzenia predykatów z goal_preds.
+    """
+    relevant = set(goal_preds)
+    changed = True
+    while changed:
+        changed = False
+        for rule in rules:
+            if rule.head_pred in relevant:
+                for atom in rule.body:
+                    if atom.pred not in relevant:
+                        relevant.add(atom.pred)
+                        changed = True
+    return relevant
+
+
+# ---------------------------------------------------------------------------
 # Budowanie promptu interpretacji
 # ---------------------------------------------------------------------------
 
@@ -453,7 +485,6 @@ def run(args: argparse.Namespace) -> None:
             derived_rules = []
     except Exception as e:
         console.print(f"[red]Błąd ładowania z bazy:[/red] {e}")
-        conn.close()
         raise SystemExit(1)
     finally:
         conn.close()
@@ -542,16 +573,27 @@ def run(args: argparse.Namespace) -> None:
 
     console.print(f"\n[bold cyan]Faza 3:[/bold cyan] Interpretacja wyników")
 
-    derived_text, goals_text = _format_derived_for_llm(all_facts, edb_facts, goal_results)
-    extracted_facts_json = json.dumps(extracted.get("facts", []), ensure_ascii=False, indent=2)
-
     # Predykaty faktycznie wyprowadzone przez solver (IDB \ EDB)
     derived_preds: set[str] = {
         pred
         for pred, args_set in all_facts.items()
         if args_set - edb_facts.get(pred, set())
     }
-    provenance_text = _format_rule_provenance(rules, derived_preds)
+
+    # Filtrowanie pod kątem celów — wysyłaj do Gemini tylko istotne dane
+    goal_preds = _goal_pred_names(goal_results)
+    if goal_preds:
+        rel_preds          = _relevant_preds_closure(goal_preds, rules)
+        facts_for_prompt   = {p: v for p, v in all_facts.items() if p in rel_preds}
+        provenance_preds   = derived_preds & rel_preds
+        extracted_facts_json = "(pominięto — fokus na wynikach zapytań)"
+    else:
+        facts_for_prompt     = all_facts
+        provenance_preds     = derived_preds
+        extracted_facts_json = json.dumps(extracted.get("facts", []), ensure_ascii=False, indent=2)
+
+    derived_text, goals_text = _format_derived_for_llm(facts_for_prompt, edb_facts, goal_results)
+    provenance_text = _format_rule_provenance(rules, provenance_preds)
 
     try:
         interp_prompt = _build_interpretation_prompt(

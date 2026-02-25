@@ -17,7 +17,7 @@ Ograniczenia (bezpieczeństwo Datalog):
 from __future__ import annotations
 
 import itertools
-from typing import Optional
+from typing import Iterator, Optional
 
 from .types import Atom, Rule
 
@@ -305,49 +305,52 @@ def _match_body(
     body:  list[Atom],
     facts: Facts,
     subst: Substitution,
-) -> list[Substitution]:
+    start: int = 0,
+) -> Iterator[Substitution]:
     """
-    Zwraca listę wszystkich podstawień rozszerzających subst,
-    przy których ciało body jest prawdziwe w facts.
+    Generator wszystkich podstawień rozszerzających subst,
+    przy których ciało body (od indeksu start) jest prawdziwe w facts.
+
+    Leniwa ewaluacja zamiast materializacji całej listy — zapobiega
+    eksplozji pamięci dla reguł z wieloma pasującymi atomami (O(M^N)).
+    Użycie indeksu start eliminuje O(N²) alokacje slicingu.
 
     Warunek bezpieczeństwa (safe Datalog):
       - argumenty negowanych atomów muszą być uziemione przez poprzednie
-        pozytywne atomy — w przeciwnym razie podnosi ValueError.
+        pozytywne atomy — w przeciwnym razie gałąź jest pomijana (fail).
     """
-    if not body:
-        return [dict(subst)]
+    if start >= len(body):
+        yield dict(subst)
+        return
 
-    atom = body[0]
-    rest = body[1:]
+    atom = body[start]
     grounded = _apply(atom.args, subst)
 
     # Builtin
     if atom.pred in BUILTINS:
         if any(a.startswith("?") for a in grounded):
-            return []  # nie można wyznaczyć — pomiń
+            return  # nie można wyznaczyć — pomiń
         ok = _eval_builtin(atom.pred, grounded)
         if ok != atom.negated:  # negated=True → chcemy False → ok must be False
-            return _match_body(rest, facts, subst)
-        return []
+            yield from _match_body(body, facts, subst, start + 1)
+        return
 
     # NAF — wszystkie args muszą być uziemione
     if atom.negated:
         if any(a.startswith("?") for a in grounded):
             # Niebezpieczna negacja: zmienna niezwiązana — pomiń tę gałąź
             # (nie możemy ocenić not P(?X) gdy ?X nieznane; konserwatywnnie: fail)
-            return []
+            return
         pred_facts = facts.get(atom.pred, set())
         if grounded not in pred_facts:
-            return _match_body(rest, facts, subst)
-        return []
+            yield from _match_body(body, facts, subst, start + 1)
+        return
 
     # Pozytywny atom — szukamy pasujących faktów
-    results: list[Substitution] = []
     for fact_args in facts.get(atom.pred, set()):
         new_subst = _unify(atom.args, fact_args, subst)
         if new_subst is not None:
-            results.extend(_match_body(rest, facts, new_subst))
-    return results
+            yield from _match_body(body, facts, new_subst, start + 1)
 
 
 # ---------------------------------------------------------------------------
@@ -371,6 +374,12 @@ def _safe_reorder_body(body: list[Atom]) -> list[Atom]:
 # ---------------------------------------------------------------------------
 # Ewaluator bottom-up
 # ---------------------------------------------------------------------------
+
+# Maksymalna liczba iteracji fixed-point dla jednej warstwy stratyfikacji.
+# Czysty Datalog zawsze zbiega (skończona baza Herbranda), ale błędne reguły
+# lub niespodziewane dane mogą powodować nieskończone pętle — stąd zabezpieczenie.
+_MAX_STRATUM_ITERS = 100_000
+
 
 class Evaluator:
     """
@@ -423,8 +432,15 @@ class Evaluator:
     def _eval_stratum(self, rules: list[Rule]) -> None:
         """Fixed-point dla jednej warstwy stratyfikacji."""
         changed = True
+        iters = 0
         while changed:
+            if iters >= _MAX_STRATUM_ITERS:
+                raise ValueError(
+                    f"Fixed-point nie zbiegł po {_MAX_STRATUM_ITERS} iteracjach — "
+                    f"możliwy błąd w regułach lub nieskończony cykl pochodnych."
+                )
             changed = False
+            iters += 1
             for rule in rules:
                 for subst in _match_body(rule.body, self._facts, {}):
                     grounded_head = _apply(rule.head_args, subst)

@@ -34,31 +34,34 @@ def fetch_predicates(domain: str) -> list[str]:
     przez ekstraktor są widoczne w kolejnych ekstrakcjach.
     """
     conn = get_connection()
-    with conn, conn.cursor() as cur:
-        if domain == "generic":
-            cur.execute(
-                """
-                SELECT pred FROM predicate
-                WHERE domain = 'generic'
-                UNION
-                SELECT pred FROM derived_predicate
-                WHERE domain = 'generic'
-                ORDER BY pred
-                """
-            )
-        else:
-            cur.execute(
-                """
-                SELECT pred FROM predicate
-                WHERE domain = 'generic' OR domain = %s
-                UNION
-                SELECT pred FROM derived_predicate
-                WHERE domain = 'generic' OR domain = %s
-                ORDER BY pred
-                """,
-                (domain, domain),
-            )
-        return [row[0] for row in cur.fetchall()]
+    try:
+        with conn.cursor() as cur:
+            if domain == "generic":
+                cur.execute(
+                    """
+                    SELECT pred FROM predicate
+                    WHERE domain = 'generic'
+                    UNION
+                    SELECT pred FROM derived_predicate
+                    WHERE domain = 'generic'
+                    ORDER BY pred
+                    """
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT pred FROM predicate
+                    WHERE domain = 'generic' OR domain = %s
+                    UNION
+                    SELECT pred FROM derived_predicate
+                    WHERE domain = 'generic' OR domain = %s
+                    ORDER BY pred
+                    """,
+                    (domain, domain),
+                )
+            return [row[0] for row in cur.fetchall()]
+    finally:
+        conn.close()
 
 
 def fetch_predicates_for_nlp(domain: str) -> list[dict]:
@@ -70,29 +73,32 @@ def fetch_predicates_for_nlp(domain: str) -> list[dict]:
     Używane przez nlp-solve do przekazania LLM informacji o dostępnych predykatach.
     """
     conn = get_connection()
-    with conn, conn.cursor() as cur:
-        if domain == "generic":
-            cur.execute(
-                """
-                SELECT name, arity, pred, signature, meaning_pl,
-                       value_domain_enum_arg_index, value_domain_allowed_values
-                FROM predicate
-                WHERE domain = 'generic' AND io != 'derived'
-                ORDER BY kind, name
-                """
-            )
-        else:
-            cur.execute(
-                """
-                SELECT name, arity, pred, signature, meaning_pl,
-                       value_domain_enum_arg_index, value_domain_allowed_values
-                FROM predicate
-                WHERE (domain = 'generic' OR domain = %s) AND io != 'derived'
-                ORDER BY kind, name
-                """,
-                (domain,),
-            )
-        rows = cur.fetchall()
+    try:
+        with conn.cursor() as cur:
+            if domain == "generic":
+                cur.execute(
+                    """
+                    SELECT name, arity, pred, signature, meaning_pl,
+                           value_domain_enum_arg_index, value_domain_allowed_values
+                    FROM predicate
+                    WHERE domain = 'generic' AND io != 'derived'
+                    ORDER BY kind, name
+                    """
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT name, arity, pred, signature, meaning_pl,
+                           value_domain_enum_arg_index, value_domain_allowed_values
+                    FROM predicate
+                    WHERE (domain = 'generic' OR domain = %s) AND io != 'derived'
+                    ORDER BY kind, name
+                    """,
+                    (domain,),
+                )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
 
     result = []
     for name, arity, pred, signature, meaning_pl, vd_idx, vd_vals in rows:
@@ -133,29 +139,32 @@ def fetch_rules(domain: str) -> list[str]:
     Limit 25 reguł — wyłącznie wzorcowe.
     """
     conn = get_connection()
-    with conn, conn.cursor() as cur:
-        if domain == "generic":
-            cur.execute(
-                """
-                SELECT head_pred, head_args, body
-                FROM rule
-                WHERE domain = 'generic'
-                ORDER BY domain, head_pred
-                LIMIT 25
-                """
-            )
-        else:
-            cur.execute(
-                """
-                SELECT head_pred, head_args, body
-                FROM rule
-                WHERE domain = 'generic' OR domain = %s
-                ORDER BY domain, head_pred
-                LIMIT 25
-                """,
-                (domain,),
-            )
-        rows = cur.fetchall()
+    try:
+        with conn.cursor() as cur:
+            if domain == "generic":
+                cur.execute(
+                    """
+                    SELECT head_pred, head_args, body
+                    FROM rule
+                    WHERE domain = 'generic'
+                    ORDER BY domain, head_pred
+                    LIMIT 25
+                    """
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT head_pred, head_args, body
+                    FROM rule
+                    WHERE domain = 'generic' OR domain = %s
+                    ORDER BY domain, head_pred
+                    LIMIT 25
+                    """,
+                    (domain,),
+                )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
 
     result = []
     for head_pred, head_args, body in rows:
@@ -174,21 +183,24 @@ def fetch_constants(domain: str) -> list[str]:
     Dodatkowo: stałe domain=<domain> (jeśli różny od 'generic').
     """
     conn = get_connection()
-    with conn, conn.cursor() as cur:
-        if domain == "generic":
-            cur.execute(
-                "SELECT value FROM constant WHERE domain = 'generic' ORDER BY value"
-            )
-        else:
-            cur.execute(
-                """
-                SELECT value FROM constant
-                WHERE domain = 'generic' OR domain = %s
-                ORDER BY value
-                """,
-                (domain,),
-            )
-        return [row[0] for row in cur.fetchall()]
+    try:
+        with conn.cursor() as cur:
+            if domain == "generic":
+                cur.execute(
+                    "SELECT value FROM constant WHERE domain = 'generic' ORDER BY value"
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT value FROM constant
+                    WHERE domain = 'generic' OR domain = %s
+                    ORDER BY value
+                    """,
+                    (domain,),
+                )
+            return [row[0] for row in cur.fetchall()]
+    finally:
+        conn.close()
 
 
 def read_conditions(path: str | None) -> str:

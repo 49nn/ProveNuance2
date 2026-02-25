@@ -19,6 +19,8 @@ from .types import Atom, Rule
 
 Facts = dict[str, set[tuple[str, ...]]]
 
+_ALLOWED_RULE_TABLES: frozenset[str] = frozenset({"rule", "derived_rule"})
+
 
 # ---------------------------------------------------------------------------
 # Fakty EDB z JSON
@@ -76,6 +78,8 @@ def _load_rules_from_table(
     fragment_id: Optional[str] = None,
 ) -> list[Rule]:
     """Ładuje reguły Horna z podanej tabeli (rule lub derived_rule)."""
+    if table not in _ALLOWED_RULE_TABLES:
+        raise ValueError(f"Niedozwolona tabela reguł: {table!r}. Dozwolone: {sorted(_ALLOWED_RULE_TABLES)}")
     wheres: list[str] = []
     params: list      = []
 

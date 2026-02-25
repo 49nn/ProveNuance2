@@ -45,14 +45,19 @@ def _save(label: str, items, upsert_fn, conn_factory, domain: str) -> None:
     if not items:
         print(f"Brak {label} do zapisania.", file=sys.stderr)
         return
+    conn = None
     try:
         conn = conn_factory()
         n = upsert_fn(conn, items, domain)
         conn.commit()
-        conn.close()
         print(f"Zapisano {n} {label} (domena: {domain}).", file=sys.stderr)
     except Exception as e:
+        if conn is not None:
+            conn.rollback()
         print(f"[warn] Błąd zapisu {label} do bazy: {e}", file=sys.stderr)
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 def _strip_negated_atoms(result: dict) -> int:

@@ -200,7 +200,6 @@ def run(args: argparse.Namespace) -> None:
             derived_rules = []
     except Exception as e:
         console.print(f"[red]Błąd ładowania z bazy:[/red] {e}")
-        conn.close()
         raise SystemExit(1)
     finally:
         conn.close()
