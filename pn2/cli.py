@@ -22,6 +22,7 @@ Komendy:
   solve               Uruchamia solver Datalog na regułach z bazy i faktach z JSON.
   extract-document    Ekstrakcja reguł dla wszystkich spanów dokumentu (batch).
   nlp-solve           Ekstrakcja faktów z tekstu NL, solver Datalog i interpretacja wyników.
+  validate-rule       Waliduje regułę Horn (JSON) względem manifestu predykatów.
 """
 
 from __future__ import annotations
@@ -53,6 +54,7 @@ from pn2.commands import extract_document as cmd_extract_document
 from pn2.commands import nlp_solve as cmd_nlp_solve
 from pn2.commands import derived_predicates as cmd_derived_predicates
 from pn2.commands import derived_rules as cmd_derived_rules
+from pn2.commands import validate_rule as cmd_validate_rule
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -89,6 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
     cmd_solve.add_parser(subparsers)
     cmd_extract_document.add_parser(subparsers)
     cmd_nlp_solve.add_parser(subparsers)
+    cmd_validate_rule.add_parser(subparsers)
 
     return parser
 

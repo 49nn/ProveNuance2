@@ -16,13 +16,14 @@ dependencies = [
     "python-dotenv>=1.0",
     "requests>=2.31",
     "beautifulsoup4>=4.12",
+    "jsonschema>=4.21",
 ]
 
 [project.scripts]
 pn2 = "pn2.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["pn2*", "pdf*", "data_model*", "llm_query*", "solver*", "html_parser*"]
+include = ["pn2*", "pdf*", "data_model*", "llm_query*", "solver*", "html_parser*", "validator*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
