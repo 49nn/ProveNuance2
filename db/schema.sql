@@ -289,3 +289,36 @@ CREATE TABLE IF NOT EXISTS derived_predicate (
 
 CREATE INDEX IF NOT EXISTS idx_derived_predicate_domain   ON derived_predicate (domain);
 CREATE INDEX IF NOT EXISTS idx_derived_predicate_fragment ON derived_predicate (source_fragment_id);
+
+-- ---------------------------------------------------------------------------
+-- derived_rule
+-- Reguły Horn odkrywane automatycznie przez ekstraktor LLM.
+-- Identyczna struktura jak rule — przechowuje reguły wygenerowane przez model.
+-- Reguły z manifestu (ręcznie napisane wzorce) trafiają do tabeli rule.
+--
+-- Unikalność: (fragment_id, rule_id).
+-- Re-ekstrakcja tego samego fragmentu → DO UPDATE.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS derived_rule (
+    id          serial  PRIMARY KEY,
+    fragment_id text    NOT NULL,
+    rule_id     text    NOT NULL,
+    head_pred   text    NOT NULL,
+    head_args   jsonb   NOT NULL,
+    body        jsonb   NOT NULL,
+    prov_unit   text[]  NOT NULL DEFAULT '{}',
+    prov_quote  text    NOT NULL DEFAULT '',
+    domain      text    NOT NULL DEFAULT 'generic',
+    notes       text,
+
+    UNIQUE (fragment_id, rule_id),
+
+    CONSTRAINT derived_rule_domain_valid
+        CHECK (domain IN ('generic', 'e-commerce', 'event'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_derived_rule_fragment  ON derived_rule (fragment_id);
+CREATE INDEX IF NOT EXISTS idx_derived_rule_head_pred ON derived_rule (head_pred);
+CREATE INDEX IF NOT EXISTS idx_derived_rule_domain    ON derived_rule (domain);
+CREATE INDEX IF NOT EXISTS idx_derived_rule_body_gin  ON derived_rule USING gin (body);

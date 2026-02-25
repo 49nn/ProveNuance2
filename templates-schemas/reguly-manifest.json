@@ -1,0 +1,444 @@
+{
+  "schema": "rules_manifest_v1",
+  "description": "Manifest wzorcowych reguł Horn pokrywający predykaty z predykaty-manifest.json. Służy jako punkt odniesienia dla ekstraktora i testera.",
+  "domains": ["generic", "e-commerce", "event"],
+  "notes": [
+    "Zmienne pisane wielką literą (Datalog): U=user, A=account, O=offer, B=bid, T=transaction, Pay=payment, D=delivery, F=fee_event, C=complaint, Ap=appeal, R=registration, E=event, S=training_series, I=item, M=marketplace, L=location, P/Min=decimal, N=int.",
+    "Stałe enum/atom pisane małą literą w cudzysłowie (np. 'auction', 'active', 'suspended').",
+    "negated=true oznacza NAF: \\+ predykat(...).",
+    "Reguły aggregate (np. modules_attended) są oznaczone kind='aggregate' — wymagają specjalnej obsługi poza standardowym Horn."
+  ],
+  "rules": [
+
+    {
+      "rule_id": "r_generic_active_account_cond",
+      "domain": "generic",
+      "kind": "condition",
+      "description_pl": "Użytkownik spełnia warunek posiadania aktywnego konta.",
+      "head": { "pred": "meets_condition", "args": ["U", "has_active_account"] },
+      "body": [
+        { "pred": "user",           "args": ["U"],          "negated": false },
+        { "pred": "has_account",    "args": ["U", "A"],     "negated": false },
+        { "pred": "account_status", "args": ["A", "active"],"negated": false }
+      ],
+      "datalog": "meets_condition(U, has_active_account) :- user(U), has_account(U, A), account_status(A, active)."
+    },
+
+    {
+      "rule_id": "r_generic_suspended_restriction_sell",
+      "domain": "generic",
+      "kind": "decision",
+      "description_pl": "Zawieszenie konta skutkuje blokadą sprzedaży.",
+      "head": { "pred": "restriction", "args": ["U", "selling", "blocked"] },
+      "body": [
+        { "pred": "user",           "args": ["U"],             "negated": false },
+        { "pred": "has_account",    "args": ["U", "A"],        "negated": false },
+        { "pred": "account_status", "args": ["A", "suspended"],"negated": false }
+      ],
+      "datalog": "restriction(U, selling, blocked) :- user(U), has_account(U, A), account_status(A, suspended)."
+    },
+
+    {
+      "rule_id": "r_generic_suspended_violates_policy",
+      "domain": "generic",
+      "kind": "audit",
+      "description_pl": "Zawieszenie konta jest naruszeniem zasad platformy.",
+      "head": { "pred": "violates", "args": ["U", "account_suspension_policy"] },
+      "body": [
+        { "pred": "user",           "args": ["U"],             "negated": false },
+        { "pred": "has_account",    "args": ["U", "A"],        "negated": false },
+        { "pred": "account_status", "args": ["A", "suspended"],"negated": false }
+      ],
+      "datalog": "violates(U, account_suspension_policy) :- user(U), has_account(U, A), account_status(A, suspended)."
+    },
+
+    {
+      "rule_id": "r_generic_terminated_restriction_access",
+      "domain": "generic",
+      "kind": "decision",
+      "description_pl": "Zamknięcie konta skutkuje blokadą dostępu do platformy.",
+      "head": { "pred": "restriction", "args": ["U", "platform_access", "blocked"] },
+      "body": [
+        { "pred": "user",           "args": ["U"],              "negated": false },
+        { "pred": "has_account",    "args": ["U", "A"],         "negated": false },
+        { "pred": "account_status", "args": ["A", "terminated"],"negated": false }
+      ],
+      "datalog": "restriction(U, platform_access, blocked) :- user(U), has_account(U, A), account_status(A, terminated)."
+    },
+
+    {
+      "rule_id": "r_generic_payment_received_cond",
+      "domain": "generic",
+      "kind": "condition",
+      "description_pl": "Transakcja spełnia warunek opłacenia gdy płatność ma status 'received'.",
+      "head": { "pred": "meets_condition", "args": ["T", "payment_received"] },
+      "body": [
+        { "pred": "transaction",              "args": ["T"],         "negated": false },
+        { "pred": "payment_for_transaction",  "args": ["Pay", "T"],  "negated": false },
+        { "pred": "payment_status",           "args": ["Pay", "received"], "negated": false }
+      ],
+      "datalog": "meets_condition(T, payment_received) :- transaction(T), payment_for_transaction(Pay, T), payment_status(Pay, received)."
+    },
+
+    {
+      "rule_id": "r_generic_fee_overdue_violates",
+      "domain": "generic",
+      "kind": "audit",
+      "description_pl": "Przeterminowana opłata narusza warunki rozliczenia.",
+      "head": { "pred": "violates", "args": ["F", "fee_overdue_policy"] },
+      "body": [
+        { "pred": "fee_event",  "args": ["F"],          "negated": false },
+        { "pred": "fee_status", "args": ["F", "overdue"],"negated": false }
+      ],
+      "datalog": "violates(F, fee_overdue_policy) :- fee_event(F), fee_status(F, overdue)."
+    },
+
+    {
+      "rule_id": "r_generic_appeal_rejected_violation_upheld",
+      "domain": "generic",
+      "kind": "audit",
+      "description_pl": "Odrzucone odwołanie potwierdza naruszenie zasad przez encję.",
+      "head": { "pred": "violates", "args": ["E", "rule_confirmed_after_appeal"] },
+      "body": [
+        { "pred": "complaint",       "args": ["C"],          "negated": false },
+        { "pred": "complaint_about", "args": ["C", "E"],     "negated": false },
+        { "pred": "appeal",          "args": ["Ap"],         "negated": false },
+        { "pred": "appeal_of",       "args": ["Ap", "C"],    "negated": false },
+        { "pred": "appeal_status",   "args": ["Ap", "rejected"], "negated": false }
+      ],
+      "datalog": "violates(E, rule_confirmed_after_appeal) :- complaint(C), complaint_about(C, E), appeal(Ap), appeal_of(Ap, C), appeal_status(Ap, rejected)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_auction_derived",
+      "domain": "e-commerce",
+      "kind": "domain",
+      "description_pl": "Oferta jest aukcją gdy tryb sprzedaży to 'auction'.",
+      "head": { "pred": "auction", "args": ["O"] },
+      "body": [
+        { "pred": "offer", "args": ["O"],          "negated": false },
+        { "pred": "mode",  "args": ["O", "auction"],"negated": false }
+      ],
+      "datalog": "auction(O) :- offer(O), mode(O, auction)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_buy_now_mode",
+      "domain": "e-commerce",
+      "kind": "ui",
+      "description_pl": "Opcja Kup Teraz jest dostępna gdy tryb oferty to 'buy_now_only'.",
+      "head": { "pred": "buy_now_available", "args": ["O"] },
+      "body": [
+        { "pred": "offer", "args": ["O"],                "negated": false },
+        { "pred": "mode",  "args": ["O", "buy_now_only"],"negated": false }
+      ],
+      "datalog": "buy_now_available(O) :- offer(O), mode(O, buy_now_only)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_buy_now_in_auction",
+      "domain": "e-commerce",
+      "kind": "ui",
+      "description_pl": "Opcja Kup Teraz dostępna w aukcji gdy włączona jest cecha 'buy_now_in_auction'.",
+      "head": { "pred": "buy_now_available", "args": ["O"] },
+      "body": [
+        { "pred": "auction",         "args": ["O"],                       "negated": false },
+        { "pred": "feature_enabled", "args": ["O", "buy_now_in_auction"], "negated": false }
+      ],
+      "datalog": "buy_now_available(O) :- auction(O), feature_enabled(O, buy_now_in_auction)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_eligible_bid_for_contract",
+      "domain": "e-commerce",
+      "kind": "decision",
+      "description_pl": "Bid kwalifikuje się do zawarcia umowy jeśli jest ważny i nie niższy niż cena minimalna.",
+      "head": { "pred": "eligible_bid_for_contract", "args": ["O", "B"] },
+      "body": [
+        { "pred": "auction",      "args": ["O"],            "negated": false },
+        { "pred": "bid_in_offer", "args": ["B", "O"],       "negated": false },
+        { "pred": "bid_state",    "args": ["B", "valid"],   "negated": false },
+        { "pred": "bid_price",    "args": ["B", "P"],       "negated": false },
+        { "pred": "min_price",    "args": ["O", "Min"],     "negated": false },
+        { "pred": "ge",           "args": ["P", "Min"],     "negated": false }
+      ],
+      "datalog": "eligible_bid_for_contract(O, B) :- auction(O), bid_in_offer(B, O), bid_state(B, valid), bid_price(B, P), min_price(O, Min), ge(P, Min)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_auction_quantity_ok",
+      "domain": "e-commerce",
+      "kind": "decision",
+      "description_pl": "Aukcja spełnia wymóg liczby sztuk gdy wystawiono dokładnie 1 egzemplarz.",
+      "head": { "pred": "auction_quantity_ok", "args": ["O"] },
+      "body": [
+        { "pred": "auction",  "args": ["O"],    "negated": false },
+        { "pred": "quantity", "args": ["O", 1], "negated": false }
+      ],
+      "datalog": "auction_quantity_ok(O) :- auction(O), quantity(O, 1)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_min_price_visible",
+      "domain": "e-commerce",
+      "kind": "ui",
+      "description_pl": "Cena minimalna jest jawna dla użytkowników gdy oferta jest aukcją.",
+      "head": { "pred": "visible_to_users", "args": ["O", "min_price"] },
+      "body": [
+        { "pred": "auction",   "args": ["O"],        "negated": false },
+        { "pred": "min_price", "args": ["O", "_Min"],"negated": false }
+      ],
+      "datalog": "visible_to_users(O, min_price) :- auction(O), min_price(O, _Min)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_min_price_hidden",
+      "domain": "e-commerce",
+      "kind": "ui",
+      "description_pl": "Cena minimalna jest ukryta gdy oferta nie jest aukcją.",
+      "head": { "pred": "hidden_to_users", "args": ["O", "min_price"] },
+      "body": [
+        { "pred": "offer",   "args": ["O"], "negated": false },
+        { "pred": "auction", "args": ["O"], "negated": true  }
+      ],
+      "datalog": "hidden_to_users(O, min_price) :- offer(O), \\+ auction(O)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_prohibited_item_violates",
+      "domain": "e-commerce",
+      "kind": "audit",
+      "description_pl": "Oferta z towarem zakazanym w danym marketplace narusza regulamin.",
+      "head": { "pred": "violates", "args": ["O", "prohibited_item_rule"] },
+      "body": [
+        { "pred": "offer",              "args": ["O"],       "negated": false },
+        { "pred": "offer_item",         "args": ["O", "I"],  "negated": false },
+        { "pred": "in_marketplace",     "args": ["O", "M"],  "negated": false },
+        { "pred": "is_prohibited_item", "args": ["I", "M"],  "negated": false }
+      ],
+      "datalog": "violates(O, prohibited_item_rule) :- offer(O), offer_item(O, I), in_marketplace(O, M), is_prohibited_item(I, M)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_conditional_item_cond",
+      "domain": "e-commerce",
+      "kind": "condition",
+      "description_pl": "Oferta z towarem warunkowo dopuszczonym wymaga weryfikacji warunków szczególnych.",
+      "head": { "pred": "meets_condition", "args": ["O", "requires_conditional_approval"] },
+      "body": [
+        { "pred": "offer",                       "args": ["O"],       "negated": false },
+        { "pred": "offer_item",                  "args": ["O", "I"],  "negated": false },
+        { "pred": "in_marketplace",              "args": ["O", "M"],  "negated": false },
+        { "pred": "is_conditionally_allowed_item","args": ["I", "M"], "negated": false }
+      ],
+      "datalog": "meets_condition(O, requires_conditional_approval) :- offer(O), offer_item(O, I), in_marketplace(O, M), is_conditionally_allowed_item(I, M)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_bidder_restriction_suspended",
+      "domain": "e-commerce",
+      "kind": "decision",
+      "description_pl": "Licytant z zawieszonym kontem ma zablokowaną możliwość licytowania.",
+      "head": { "pred": "restriction", "args": ["U", "bidding", "blocked"] },
+      "body": [
+        { "pred": "user",           "args": ["U"],             "negated": false },
+        { "pred": "role",           "args": ["U", "bidder"],   "negated": false },
+        { "pred": "has_account",    "args": ["U", "A"],        "negated": false },
+        { "pred": "account_status", "args": ["A", "suspended"],"negated": false }
+      ],
+      "datalog": "restriction(U, bidding, blocked) :- user(U), role(U, bidder), has_account(U, A), account_status(A, suspended)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_payment_deadline_violates",
+      "domain": "e-commerce",
+      "kind": "audit",
+      "description_pl": "Transakcja nieopłacona w terminie narusza warunki regulaminu.",
+      "head": { "pred": "violates", "args": ["T", "payment_deadline_exceeded"] },
+      "body": [
+        { "pred": "transaction",      "args": ["T"],                           "negated": false },
+        { "pred": "payment_deadline", "args": ["T", "_D"],                     "negated": false },
+        { "pred": "meets_condition",  "args": ["T", "payment_received"],       "negated": true  }
+      ],
+      "datalog": "violates(T, payment_deadline_exceeded) :- transaction(T), payment_deadline(T, _D), \\+ meets_condition(T, payment_received)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_active_seller_cond",
+      "domain": "e-commerce",
+      "kind": "condition",
+      "description_pl": "Sprzedający jest aktywnym sprzedawcą gdy posiada przynajmniej jedną opublikowaną ofertę.",
+      "head": { "pred": "meets_condition", "args": ["U", "active_seller"] },
+      "body": [
+        { "pred": "user",            "args": ["U"],             "negated": false },
+        { "pred": "role",            "args": ["U", "seller"],   "negated": false },
+        { "pred": "seller_of_offer", "args": ["O", "U"],        "negated": false },
+        { "pred": "offer_status",    "args": ["O", "published"],"negated": false }
+      ],
+      "datalog": "meets_condition(U, active_seller) :- user(U), role(U, seller), seller_of_offer(O, U), offer_status(O, published)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_eligible_for_rating",
+      "domain": "e-commerce",
+      "kind": "condition",
+      "description_pl": "Transakcja zakończona dostarczeniem towaru jest uprawniona do wystawienia oceny.",
+      "head": { "pred": "meets_condition", "args": ["T", "eligible_for_rating"] },
+      "body": [
+        { "pred": "transaction",        "args": ["T"],             "negated": false },
+        { "pred": "transaction_status", "args": ["T", "delivered"],"negated": false }
+      ],
+      "datalog": "meets_condition(T, eligible_for_rating) :- transaction(T), transaction_status(T, delivered)."
+    },
+
+    {
+      "rule_id": "r_ecommerce_delivery_missing_violates",
+      "domain": "e-commerce",
+      "kind": "audit",
+      "description_pl": "Brak przesyłki dla transakcji w trakcie realizacji narusza obowiązek wysyłki.",
+      "head": { "pred": "violates", "args": ["T", "shipment_obligation"] },
+      "body": [
+        { "pred": "transaction",        "args": ["T"],               "negated": false },
+        { "pred": "transaction_status", "args": ["T", "in_progress"],"negated": false },
+        { "pred": "delivery_for_transaction", "args": ["_D", "T"],   "negated": true  }
+      ],
+      "datalog": "violates(T, shipment_obligation) :- transaction(T), transaction_status(T, in_progress), \\+ delivery_for_transaction(_D, T)."
+    },
+
+    {
+      "rule_id": "r_event_eligible_to_register",
+      "domain": "event",
+      "kind": "decision",
+      "description_pl": "Użytkownik może się zarejestrować na wydarzenie gdy ma aktywne konto, brak zaświadczenia z poprzedniej edycji cyklu i wydarzenie nie zostało odwołane.",
+      "head": { "pred": "eligible_to_register", "args": ["U", "E"] },
+      "body": [
+        { "pred": "user",                    "args": ["U"],          "negated": false },
+        { "pred": "has_account",             "args": ["U", "A"],     "negated": false },
+        { "pred": "account_status",          "args": ["A", "active"],"negated": false },
+        { "pred": "event",                   "args": ["E"],          "negated": false },
+        { "pred": "event_in_series",         "args": ["E", "S"],     "negated": false },
+        { "pred": "has_previous_certificate","args": ["U", "S"],     "negated": true  },
+        { "pred": "event_cancelled",         "args": ["E"],          "negated": true  }
+      ],
+      "datalog": "eligible_to_register(U, E) :- user(U), has_account(U, A), account_status(A, active), event(E), event_in_series(E, S), \\+ has_previous_certificate(U, S), \\+ event_cancelled(E)."
+    },
+
+    {
+      "rule_id": "r_event_registration_confirmed_cond",
+      "domain": "event",
+      "kind": "condition",
+      "description_pl": "Zgłoszenie jest potwierdzone gdy jego status to 'confirmed'.",
+      "head": { "pred": "meets_condition", "args": ["R", "registration_confirmed"] },
+      "body": [
+        { "pred": "registration",        "args": ["R"],              "negated": false },
+        { "pred": "registration_status", "args": ["R", "confirmed"], "negated": false }
+      ],
+      "datalog": "meets_condition(R, registration_confirmed) :- registration(R), registration_status(R, confirmed)."
+    },
+
+    {
+      "rule_id": "r_event_module_completed_cond",
+      "domain": "event",
+      "kind": "condition",
+      "description_pl": "Użytkownik zaliczył moduł gdy potwierdzono jego obecność i zdał test.",
+      "head": { "pred": "meets_condition", "args": ["U", "module_completed"] },
+      "body": [
+        { "pred": "user",                 "args": ["U"],      "negated": false },
+        { "pred": "event",                "args": ["E"],      "negated": false },
+        { "pred": "attendance_confirmed", "args": ["U", "E"], "negated": false },
+        { "pred": "test_passed",          "args": ["U", "E"], "negated": false }
+      ],
+      "datalog": "meets_condition(U, module_completed) :- user(U), event(E), attendance_confirmed(U, E), test_passed(U, E)."
+    },
+
+    {
+      "rule_id": "r_event_modules_attended_aggregate",
+      "domain": "event",
+      "kind": "aggregate",
+      "description_pl": "Liczba modułów głównych zaliczonych przez użytkownika w cyklu (obecność + test). Wymaga agregacji COUNT — nie jest standardową klauzulą Horn.",
+      "head": { "pred": "modules_attended", "args": ["U", "S", "N"] },
+      "body": [
+        { "pred": "user",                 "args": ["U"],      "negated": false },
+        { "pred": "training_series",      "args": ["S"],      "negated": false },
+        { "pred": "event_in_series",      "args": ["E", "S"], "negated": false },
+        { "pred": "attendance_confirmed", "args": ["U", "E"], "negated": false },
+        { "pred": "test_passed",          "args": ["U", "E"], "negated": false }
+      ],
+      "aggregate": {
+        "function": "COUNT",
+        "over": "E",
+        "bind_to": "N"
+      },
+      "datalog": "modules_attended(U, S, N) :- training_series(S), N = #count{ E : event_in_series(E, S), attendance_confirmed(U, E), test_passed(U, E) }."
+    },
+
+    {
+      "rule_id": "r_event_eligible_for_certificate",
+      "domain": "event",
+      "kind": "decision",
+      "description_pl": "Użytkownik jest uprawniony do zaświadczenia gdy zaliczył co najmniej 8 modułów głównych cyklu.",
+      "head": { "pred": "eligible_for_certificate", "args": ["U", "S"] },
+      "body": [
+        { "pred": "training_series",    "args": ["S"],       "negated": false },
+        { "pred": "modules_attended",   "args": ["U", "S", "N"], "negated": false },
+        { "pred": "ge",                 "args": ["N", 8],    "negated": false }
+      ],
+      "datalog": "eligible_for_certificate(U, S) :- training_series(S), modules_attended(U, S, N), ge(N, 8)."
+    },
+
+    {
+      "rule_id": "r_event_certificate_issued",
+      "domain": "event",
+      "kind": "decision",
+      "description_pl": "Zaświadczenie zostaje wydane uczestnikowi który spełnia warunki do zaświadczenia.",
+      "head": { "pred": "certificate_issued", "args": ["U", "S"] },
+      "body": [
+        { "pred": "eligible_for_certificate", "args": ["U", "S"], "negated": false }
+      ],
+      "datalog": "certificate_issued(U, S) :- eligible_for_certificate(U, S)."
+    },
+
+    {
+      "rule_id": "r_event_cancellation_violates",
+      "domain": "event",
+      "kind": "audit",
+      "description_pl": "Odwołanie wydarzenia powoduje, że potwierdzone zgłoszenia nie mogą zostać zrealizowane.",
+      "head": { "pred": "violates", "args": ["R", "event_cancellation_impact"] },
+      "body": [
+        { "pred": "registration",        "args": ["R"],              "negated": false },
+        { "pred": "registration_status", "args": ["R", "confirmed"], "negated": false },
+        { "pred": "registration_for",    "args": ["R", "E"],         "negated": false },
+        { "pred": "event_cancelled",     "args": ["E"],              "negated": false }
+      ],
+      "datalog": "violates(R, event_cancellation_impact) :- registration(R), registration_status(R, confirmed), registration_for(R, E), event_cancelled(E)."
+    },
+
+    {
+      "rule_id": "r_event_online_event_cond",
+      "domain": "event",
+      "kind": "condition",
+      "description_pl": "Wydarzenie jest online gdy jego lokalizacja jest typu 'online'.",
+      "head": { "pred": "meets_condition", "args": ["E", "online_event"] },
+      "body": [
+        { "pred": "event",          "args": ["E"],           "negated": false },
+        { "pred": "has_location",   "args": ["E", "L"],      "negated": false },
+        { "pred": "location_type",  "args": ["L", "online"], "negated": false }
+      ],
+      "datalog": "meets_condition(E, online_event) :- event(E), has_location(E, L), location_type(L, online)."
+    },
+
+    {
+      "rule_id": "r_event_no_capacity_cond",
+      "domain": "event",
+      "kind": "condition",
+      "description_pl": "Wydarzenie nie ma limitu miejsc gdy pojemność = 0.",
+      "head": { "pred": "meets_condition", "args": ["E", "unlimited_capacity"] },
+      "body": [
+        { "pred": "event",           "args": ["E"],    "negated": false },
+        { "pred": "event_capacity",  "args": ["E", 0], "negated": false }
+      ],
+      "datalog": "meets_condition(E, unlimited_capacity) :- event(E), event_capacity(E, 0)."
+    }
+
+  ]
+}

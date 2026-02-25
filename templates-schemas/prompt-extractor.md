@@ -131,6 +131,12 @@ LISTA ZNANYCH STAŁYCH (known_constants):
 - KAŻDA stała użyta w regułach (z listy lub nowa) MUSI mieć wpis w derived_predicates: {"pred": "nazwa/0", "meaning": "..."}. Nie pomijaj żadnej stałej.
 {{KNOWN_CONSTANTS}}
 
+WZORCOWE REGUŁY HORN (z bazy wiedzy — wyłącznie jako wzorzec składni):
+- Poniższe reguły ilustrują poprawną składnię i konwencje dla domeny {{DOMAIN}}.
+- NIE kopiuj ich do wyniku — służą wyłącznie jako przykład.
+- Zmienne poprzedzone "?" (np. ?O, ?U), stałe bez "?" (np. auction, active).
+{{EXAMPLE_RULES}}
+
 TERAZ:
 - Wczytaj condition_dictionary z wejścia.
 - Przeanalizuj fragment regulaminu.

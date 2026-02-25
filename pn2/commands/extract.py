@@ -17,7 +17,7 @@ from llm_query import (
     collect_assumptions,
     upsert_assumptions,
     collect_rules,
-    upsert_rules,
+    upsert_derived_rules,
     collect_conditions,
     upsert_conditions,
     collect_derived_predicates,
@@ -96,10 +96,10 @@ def run(args: argparse.Namespace) -> None:
 
     domain = args.domain
 
-    # --- reguły ---
+    # --- reguły (do tabeli derived_rule) ---
     rules = collect_rules(result)
     print(f"  reguły ({len(rules)}): {', '.join(r['rule_id'] for r in rules)}", file=sys.stderr)
-    _save("reguł", rules, upsert_rules, get_connection, domain)
+    _save("reguł", rules, upsert_derived_rules, get_connection, domain)
 
     # --- predykaty pochodne (głowy reguł) ---
     derived_preds = collect_derived_predicates(rules)

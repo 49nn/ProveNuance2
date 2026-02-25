@@ -128,7 +128,7 @@ def _extract_span(
 def _save_result(result: dict, domain: str) -> dict[str, int]:
     """Zapisuje wszystkie dane z jednego wyniku ekstrakcji. Zwraca liczniki."""
     from llm_query import (
-        collect_rules,              upsert_rules,
+        collect_rules,              upsert_derived_rules,
         collect_conditions,         upsert_conditions,
         collect_constants,          upsert_constants,
         collect_assumptions,        upsert_assumptions,
@@ -146,7 +146,7 @@ def _save_result(result: dict, domain: str) -> dict[str, int]:
     try:
         rules = collect_rules(result)
         if rules:
-            counts["rules"] = upsert_rules(conn, rules, domain)
+            counts["rules"] = upsert_derived_rules(conn, rules, domain)
 
         derived = collect_derived_predicates(rules)
         if derived:

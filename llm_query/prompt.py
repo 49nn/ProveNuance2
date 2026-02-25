@@ -112,6 +112,61 @@ def fetch_predicates_for_nlp(domain: str) -> list[dict]:
     return result
 
 
+def _rule_to_datalog(head_pred: str, head_args: list, body: list) -> str:
+    """Formatuje regułę Horn jako napis Datalog."""
+    def _fmt(pred: str, args: list, negated: bool = False) -> str:
+        s = f"{pred}({', '.join(str(a) for a in args)})"
+        return (r"\+ " if negated else "") + s
+
+    head = _fmt(head_pred, head_args)
+    body_parts = [_fmt(a["pred"], a.get("args", []), a.get("negated", False)) for a in body]
+    if body_parts:
+        return f"{head} :- {', '.join(body_parts)}."
+    return f"{head}."
+
+
+def fetch_rules(domain: str) -> list[str]:
+    """
+    Zwraca przykładowe reguły Horn z tabeli rule (z manifestu) jako napisy Datalog.
+    Zawsze dołączane: reguły domain='generic'.
+    Dodatkowo: reguły domain=<domain> (jeśli różny od 'generic').
+    Limit 25 reguł — wyłącznie wzorcowe.
+    """
+    conn = get_connection()
+    with conn, conn.cursor() as cur:
+        if domain == "generic":
+            cur.execute(
+                """
+                SELECT head_pred, head_args, body
+                FROM rule
+                WHERE domain = 'generic'
+                ORDER BY domain, head_pred
+                LIMIT 25
+                """
+            )
+        else:
+            cur.execute(
+                """
+                SELECT head_pred, head_args, body
+                FROM rule
+                WHERE domain = 'generic' OR domain = %s
+                ORDER BY domain, head_pred
+                LIMIT 25
+                """,
+                (domain,),
+            )
+        rows = cur.fetchall()
+
+    result = []
+    for head_pred, head_args, body in rows:
+        if not isinstance(head_args, list):
+            head_args = json.loads(head_args) if isinstance(head_args, str) else []
+        if not isinstance(body, list):
+            body = json.loads(body) if isinstance(body, str) else []
+        result.append(_rule_to_datalog(head_pred, head_args, body))
+    return result
+
+
 def fetch_constants(domain: str) -> list[str]:
     """
     Zwraca listę znanych stałych dla danej domeny.
@@ -193,6 +248,10 @@ def build_prompt(
     allowed_json    = json.dumps(predicates, ensure_ascii=False, indent=2)
     constants       = fetch_constants(domain)
     constants_json  = json.dumps(constants, ensure_ascii=False, indent=2)
+    example_rules   = fetch_rules(domain)
+    example_rules_txt = (
+        "\n".join(example_rules) if example_rules else "(brak wzorcowych reguł w bazie)"
+    )
     body            = _load_template(template_path)
 
     return (
@@ -200,6 +259,7 @@ def build_prompt(
         .replace("{{DOMAIN}}",               domain)
         .replace("{{ALLOWED_PREDICATES}}",    allowed_json)
         .replace("{{KNOWN_CONSTANTS}}",       constants_json)
+        .replace("{{EXAMPLE_RULES}}",         example_rules_txt)
         .replace("{{CONDITION_DICTIONARY}}", conditions)
         .replace("{{FRAGMENT}}",              fragment)
     )

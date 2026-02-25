@@ -107,6 +107,14 @@ def _reset_derived_predicates(cur) -> None:
         _skipped("derived_predicate")
 
 
+def _reset_derived_rules(cur) -> None:
+    if _table_exists(cur, "derived_rule"):
+        cur.execute("DELETE FROM derived_rule")
+        _deleted(cur.rowcount, "derived_rule")
+    else:
+        _skipped("derived_rule")
+
+
 # ---------------------------------------------------------------------------
 # Główna logika
 # ---------------------------------------------------------------------------
@@ -115,7 +123,7 @@ def run(args: argparse.Namespace) -> None:
     cel: str = args.cel
     doc_id: str | None = getattr(args, "doc_id", None)
 
-    if doc_id and cel not in ("doc", "all"):
+    if doc_id and cel not in ("doc", "all", "all-derived"):
         console.print(
             f"[yellow]--doc-id ignorowane przy celu [bold]{cel}[/bold][/yellow]"
         )
@@ -133,6 +141,8 @@ def run(args: argparse.Namespace) -> None:
             _reset_predicates(cur)
         elif cel == "rules":
             _reset_rules(cur)
+        elif cel == "derived-rules":
+            _reset_derived_rules(cur)
         elif cel == "conditions":
             _reset_conditions(cur)
         elif cel == "constants":
@@ -141,11 +151,16 @@ def run(args: argparse.Namespace) -> None:
             _reset_assumptions(cur)
         elif cel == "derived-predicates":
             _reset_derived_predicates(cur)
+        elif cel == "all-derived":
+            _reset_doc(cur, doc_id)
+            _reset_derived_rules(cur)
+            _reset_derived_predicates(cur)
         elif cel == "all":
             _reset_doc(cur, doc_id)
             _reset_predicates(cur)
             _reset_derived_predicates(cur)
             _reset_rules(cur)
+            _reset_derived_rules(cur)
             _reset_conditions(cur)
             _reset_constants(cur)
             _reset_assumptions(cur)
@@ -170,17 +185,23 @@ Cele:
                        Opcja --doc-id ogranicza usuwanie do jednego dokumentu.
   predicates           Czyści predykaty i manifest_policy.
   derived-predicates   Czyści predykaty pochodne (derived_predicate).
-  rules                Czyści reguły (gdy tabela istnieje).
+  rules                Czyści reguły z manifestu (rule).
+  derived-rules        Czyści reguły odkryte przez ekstraktor (derived_rule).
   conditions           Czyści warunki (gdy tabela istnieje).
   constants            Czyści stałe domenowe (gdy tabela istnieje).
   assumptions          Czyści założenia scoped (gdy tabela istnieje).
-  all                  Wykonuje wszystkie powyższe.
+  all-derived          Czyści tylko wyniki ekstrakcji: document_span, derived_rule,
+                       derived_predicate. Zostawia manifest (predicate, rule).
+  all                  Wykonuje wszystkie powyższe (łącznie z manifestem).
 
 Przykłady:
   pn2 reset doc
   pn2 reset doc --doc-id Regulamin
   pn2 reset predicates
   pn2 reset derived-predicates
+  pn2 reset derived-rules
+  pn2 reset all-derived
+  pn2 reset all-derived --doc-id Regulamin
   pn2 reset all
   pn2 reset all --doc-id Regulamin
         """,
@@ -188,13 +209,22 @@ Przykłady:
     p.add_argument(
         "cel",
         metavar="CEL",
-        choices=["doc", "predicates", "derived-predicates", "rules", "conditions", "constants", "assumptions", "all"],
-        help="Co usunąć: doc | predicates | derived-predicates | rules | conditions | constants | assumptions | all",
+        choices=[
+            "doc", "predicates", "derived-predicates",
+            "rules", "derived-rules",
+            "conditions", "constants", "assumptions",
+            "all-derived", "all",
+        ],
+        help=(
+            "Co usunąć: doc | predicates | derived-predicates | "
+            "rules | derived-rules | conditions | constants | assumptions | "
+            "all-derived | all"
+        ),
     )
     p.add_argument(
         "--doc-id",
         metavar="ID",
         default=None,
-        help="(tylko dla 'doc' / 'all') Ogranicz usuwanie do doc_id=ID.",
+        help="(tylko dla 'doc' / 'all' / 'all-derived') Ogranicz usuwanie do doc_id=ID.",
     )
     p.set_defaults(func=run)
