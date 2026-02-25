@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import pathlib
+import sys
 
 from rich.console import Console
 from rich.table   import Table
@@ -65,6 +66,73 @@ def _show_derived_facts(all_facts: dict, edb: dict) -> None:
             table.add_row(pred, ", ".join(args))
     console.print(table)
     console.print(f"  [dim]{sum(len(v) for v in derived.values())} faktów w {len(derived)} predykatach[/dim]")
+
+
+def _print_horn(rules: list, edb_facts: dict, all_facts: dict) -> None:
+    """Drukuje pełne rozumowanie jako klauzule Horna na stdout (plain text)."""
+    out: list[str] = []
+
+    # ── EDB ──────────────────────────────────────────────────────────────────
+    out.append("% ===== EDB (fakty wejściowe) =====")
+    for pred in sorted(edb_facts):
+        for args in sorted(edb_facts[pred]):
+            if args:
+                out.append(f"{pred}({', '.join(args)}).")
+            else:
+                out.append(f"{pred}.")
+    out.append("")
+
+    # ── REGUŁY ───────────────────────────────────────────────────────────────
+    out.append("% ===== REGUŁY IDB =====")
+    for rule in rules:
+        if rule.prov_unit:
+            units_str = ", ".join(f"§{u}" for u in rule.prov_unit)
+            out.append(f"% [{rule.rule_id}] {units_str}")
+        if rule.prov_quote:
+            q = rule.prov_quote[:120].replace("\n", " ")
+            out.append(f'% "{q}"')
+
+        head_args_str = ", ".join(rule.head_args)
+        head = f"{rule.head_pred}({head_args_str})" if head_args_str else rule.head_pred
+
+        if rule.body:
+            body_atoms: list[str] = []
+            for atom in rule.body:
+                atom_args_str = ", ".join(atom.args)
+                atom_s = f"{atom.pred}({atom_args_str})" if atom_args_str else atom.pred
+                if atom.negated:
+                    atom_s = f"not {atom_s}"
+                body_atoms.append(atom_s)
+            body_str = ",\n    ".join(body_atoms)
+            out.append(f"{head} :-\n    {body_str}.")
+        else:
+            out.append(f"{head}.")
+        out.append("")
+
+    # ── FAKTY POCHODNE ───────────────────────────────────────────────────────
+    out.append("% ===== FAKTY POCHODNE (IDB \\ EDB) =====")
+    derived: dict[str, set] = {}
+    for pred, args_set in all_facts.items():
+        new_args = args_set - edb_facts.get(pred, set())
+        if new_args:
+            derived[pred] = new_args
+
+    if not derived:
+        out.append("% (brak)")
+    else:
+        for pred in sorted(derived):
+            for args in sorted(derived[pred]):
+                if args:
+                    out.append(f"{pred}({', '.join(args)}).")
+                else:
+                    out.append(f"{pred}.")
+
+    output = "\n".join(out) + "\n"
+    try:
+        sys.stdout.buffer.write(output.encode("utf-8"))
+        sys.stdout.buffer.flush()
+    except AttributeError:
+        print(output, end="")
 
 
 def _show_strata(strata: dict[str, int]) -> None:
@@ -137,6 +205,7 @@ def run(args: argparse.Namespace) -> None:
     finally:
         conn.close()
 
+    manifest_rules = rules  # zachowaj oddzielnie do fallbacku
     if include_derived and derived_rules:
         console.print(
             f"Reguły IDB:  [bold]{len(rules)}[/bold] manifest + "
@@ -164,8 +233,21 @@ def run(args: argparse.Namespace) -> None:
     try:
         ev = Evaluator(rules=rules, facts=edb_facts, conditions=conditions)
     except ValueError as e:
-        console.print(f"[red]Błąd stratyfikacji:[/red] {e}")
-        raise SystemExit(1)
+        if include_derived and derived_rules:
+            console.print(f"[yellow]Ostrzeżenie stratyfikacji:[/yellow] {e}")
+            console.print(
+                f"[yellow]Reguły derived ({len(derived_rules)}) powodują konflikt — "
+                f"solver uruchomiony wyłącznie z regułami manifestu ({len(manifest_rules)}).[/yellow]"
+            )
+            rules = manifest_rules
+            try:
+                ev = Evaluator(rules=rules, facts=edb_facts, conditions=conditions)
+            except ValueError as e2:
+                console.print(f"[red]Błąd stratyfikacji (manifest):[/red] {e2}")
+                raise SystemExit(1)
+        else:
+            console.print(f"[red]Błąd stratyfikacji:[/red] {e}")
+            raise SystemExit(1)
 
     if args.show_strata:
         _show_strata(ev.strata)
@@ -179,7 +261,10 @@ def run(args: argparse.Namespace) -> None:
     n_idb = sum(len(v) for v in all_facts.values()) - n_edb
     console.print(f"Ewaluacja zakończona: [green]{n_idb}[/green] nowych faktów pochodnych")
 
-    # 4. Odpowiedzi na cele
+    # 4. Odpowiedzi na cele / wydruk Horn
+    if getattr(args, "print_horn", False):
+        _print_horn(rules, edb_facts, all_facts)
+
     goals_raw: list[str] = args.goal or []
     if goals_raw:
         for goal_str in goals_raw:
@@ -189,9 +274,7 @@ def run(args: argparse.Namespace) -> None:
                 console.print(f"[red]Błąd parsowania celu:[/red] {e}")
                 continue
             _show_goal_result(goal_str, pred, goal_args, ev)
-    elif args.show_derived:
-        _show_derived_facts(all_facts, edb_facts)
-    else:
+    elif not getattr(args, "print_horn", False):
         _show_derived_facts(all_facts, edb_facts)
 
 
@@ -264,5 +347,14 @@ Przykłady:
         action="store_true",
         dest="include_derived",
         help="Uwzględnij reguły z tabeli derived_rule (odkryte automatycznie) obok reguł manifestu.",
+    )
+    p.add_argument(
+        "--print-horn",
+        action="store_true",
+        dest="print_horn",
+        help=(
+            "Wydrukuj pełne rozumowanie jako klauzule Horna (EDB + reguły + fakty pochodne). "
+            "Można łączyć z --goal."
+        ),
     )
     p.set_defaults(func=run)

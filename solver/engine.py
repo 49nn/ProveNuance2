@@ -189,6 +189,43 @@ def expand_meets_condition(
 # Stratyfikacja
 # ---------------------------------------------------------------------------
 
+def _find_neg_cycle_preds(
+    neg_deps: dict[str, set[str]],
+    all_deps: dict[str, set[str]],
+    preds:    set[str],
+) -> set[str]:
+    """
+    Znajduje predykaty należące do cyklu przechodzącego przez negację.
+
+    Cykl istnieje gdy p negatywnie zależy od q ORAZ q może dosięgnąć p
+    przez dowolne zależności (pozytywne lub negatywne).
+    """
+    # Oblicz domknięcie przechodnie przez wszystkie zależności
+    reachability: dict[str, set[str]] = {}
+
+    def reachable(start: str) -> set[str]:
+        if start in reachability:
+            return reachability[start]
+        visited: set[str] = set()
+        stack = [start]
+        while stack:
+            node = stack.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            stack.extend(all_deps.get(node, set()))
+        reachability[start] = visited
+        return visited
+
+    cycle_preds: set[str] = set()
+    for p in preds:
+        for q in neg_deps.get(p, set()):
+            if p in reachable(q):
+                cycle_preds.add(p)
+                cycle_preds.add(q)
+    return cycle_preds
+
+
 def compute_strata(rules: list[Rule]) -> dict[str, int]:
     """
     Oblicza numer warstwy (stratum) dla każdego predykatu.
@@ -244,9 +281,14 @@ def compute_strata(rules: list[Rule]) -> dict[str, int]:
                     changed = True
 
     if iters >= max_iter:
+        all_deps = {p: pos_deps.get(p, set()) | neg_deps.get(p, set()) for p in preds}
+        cycle = _find_neg_cycle_preds(neg_deps, all_deps, preds)
+        cycle_str = ", ".join(sorted(cycle)[:10])
+        if len(cycle) > 10:
+            cycle_str += f" … (+{len(cycle) - 10})"
         raise ValueError(
-            "Program nie jest stratyfikowalny — cykl przez negację (NAF). "
-            "Sprawdź reguły z 'not' w ciele."
+            f"Program nie jest stratyfikowalny — cykl przez negację (NAF). "
+            f"Predykaty w cyklu: [{cycle_str}]."
         )
 
     return stratum

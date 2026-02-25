@@ -228,6 +228,7 @@ def build_prompt(
     conditions: str,
     fragment: str,
     template_path: pathlib.Path = TEMPLATE_PATH,
+    no_negation: bool = False,
 ) -> str:
     """
     Buduje gotowy prompt zastępując wszystkie placeholdery.
@@ -237,6 +238,7 @@ def build_prompt(
         conditions:    Zawartość słownika warunków jako string JSON.
         fragment:      Tekst fragmentu regulaminu.
         template_path: Ścieżka do szablonu prompt-extractor.md.
+        no_negation:   Gdy True, zakazuje LLM używania negacji (negated: true).
 
     Returns:
         Wypełniony prompt gotowy do wysłania do modelu.
@@ -254,7 +256,7 @@ def build_prompt(
     )
     body            = _load_template(template_path)
 
-    return (
+    result = (
         body
         .replace("{{DOMAIN}}",               domain)
         .replace("{{ALLOWED_PREDICATES}}",    allowed_json)
@@ -263,3 +265,19 @@ def build_prompt(
         .replace("{{CONDITION_DICTIONARY}}", conditions)
         .replace("{{FRAGMENT}}",              fragment)
     )
+
+    if no_negation:
+        # Zastąp zezwolenie na negację zakazem
+        result = result.replace(
+            '- Negacja w ciele dopuszczalna jako stratified NAF: atom z polem "negated": true.',
+            '- ZAKAZ NEGACJI: NIE używaj "negated": true w żadnym atomie ciała.'
+            ' Wyjątki modeluj przez odrębne reguły pozytywne (np. denied, excluded, not_eligible).',
+        )
+        # Dodaj ostrzeżenie tuż przed sekcją TERAZ
+        result = result.replace(
+            "TERAZ:",
+            'WAŻNE — BEZWZGLĘDNY ZAKAZ: żaden atom w żadnej regule nie może mieć'
+            ' "negated": true. Każdy wygenerowany atom musi mieć "negated": false lub brak pola "negated".\n\nTERAZ:',
+        )
+
+    return result

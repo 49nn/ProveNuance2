@@ -68,6 +68,17 @@ def _fragment_id(doc_id: str, unit: str) -> str:
     return f"{doc_id}___{safe_unit}"
 
 
+def _strip_negated_atoms(result: dict) -> int:
+    """Usuwa negowane atomy z ciał reguł (fallback gdy --no-negation). Zwraca liczbę usuniętych."""
+    removed = 0
+    for rule in result.get("rules", []):
+        body = rule.get("body", [])
+        filtered = [atom for atom in body if not atom.get("negated", False)]
+        removed += len(body) - len(filtered)
+        rule["body"] = filtered
+    return removed
+
+
 def _extract_span(
     span:    dict,
     doc_id:  str,
@@ -75,6 +86,7 @@ def _extract_span(
     model:   str,
     conditions_txt: str,
     show_prompt: bool,
+    no_negation: bool = False,
 ) -> dict | None:
     """
     Buduje prompt, wysyła do Gemini, parsuje odpowiedź.
@@ -89,7 +101,7 @@ def _extract_span(
     fragment_text += f"{span['title']}\n\n{span['content']}"
 
     try:
-        prompt = build_prompt(domain, conditions_txt, fragment_text)
+        prompt = build_prompt(domain, conditions_txt, fragment_text, no_negation=no_negation)
     except Exception as e:
         console.print(f"    [red]Błąd budowania promptu:[/red] {e}")
         return None
@@ -118,6 +130,12 @@ def _extract_span(
 
     # Nadpisz fragment_id — nie ufamy LLM w tym polu
     result["fragment_id"] = _fragment_id(doc_id, span["unit"])
+
+    if no_negation:
+        stripped = _strip_negated_atoms(result)
+        if stripped:
+            console.print(f"    [dim]usunięto {stripped} negowanych atomów (--no-negation)[/dim]")
+
     return result
 
 
@@ -248,7 +266,7 @@ def run(args: argparse.Namespace) -> None:
             f"  str.{pages}  {len(span['content'])} znaków"
         )
 
-        result = _extract_span(span, args.doc_id, domain, model, conditions_txt, args.show_prompt)
+        result = _extract_span(span, args.doc_id, domain, model, conditions_txt, args.show_prompt, getattr(args, "no_negation", False))
         if result is None:
             errors += 1
         else:
@@ -360,5 +378,14 @@ Przykłady:
         "--show-prompt",
         action="store_true",
         help="Wypisz fragment promptu przed każdym wywołaniem.",
+    )
+    p.add_argument(
+        "--no-negation",
+        action="store_true",
+        dest="no_negation",
+        help=(
+            "Zabroń LLM używania negacji (negated: true) w regułach. "
+            "Zapobiega błędom stratyfikacji przy --include-derived."
+        ),
     )
     p.set_defaults(func=run)

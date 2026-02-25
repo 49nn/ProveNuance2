@@ -55,12 +55,24 @@ def _save(label: str, items, upsert_fn, conn_factory, domain: str) -> None:
         print(f"[warn] Błąd zapisu {label} do bazy: {e}", file=sys.stderr)
 
 
+def _strip_negated_atoms(result: dict) -> int:
+    """Usuwa negowane atomy z ciał reguł (fallback gdy --no-negation). Zwraca liczbę usuniętych."""
+    removed = 0
+    for rule in result.get("rules", []):
+        body = rule.get("body", [])
+        filtered = [atom for atom in body if not atom.get("negated", False)]
+        removed += len(body) - len(filtered)
+        rule["body"] = filtered
+    return removed
+
+
 def run(args: argparse.Namespace) -> None:
     conditions_txt = read_conditions(args.conditions)
     fragment       = read_fragment(args.fragment)
+    no_negation    = getattr(args, "no_negation", False)
 
     try:
-        prompt = build_prompt(args.domain, conditions_txt, fragment)
+        prompt = build_prompt(args.domain, conditions_txt, fragment, no_negation=no_negation)
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
         raise SystemExit(1)
@@ -93,6 +105,11 @@ def run(args: argparse.Namespace) -> None:
     if result is None:
         print("[warn] Nie można sparsować JSON — dane nie zostały zapisane.", file=sys.stderr)
         return
+
+    if no_negation:
+        stripped = _strip_negated_atoms(result)
+        if stripped:
+            print(f"[warn] Usunięto {stripped} negowanych atomów (--no-negation).", file=sys.stderr)
 
     domain = args.domain
 
@@ -207,5 +224,14 @@ Przykłady:
         "--out", "-o",
         metavar="PLIK",
         help="Zapisz wynik JSON do pliku (domyślnie: stdout).",
+    )
+    p.add_argument(
+        "--no-negation",
+        action="store_true",
+        dest="no_negation",
+        help=(
+            "Zabroń LLM używania negacji (negated: true) w regułach. "
+            "Zapobiega błędom stratyfikacji przy --include-derived."
+        ),
     )
     p.set_defaults(func=run)

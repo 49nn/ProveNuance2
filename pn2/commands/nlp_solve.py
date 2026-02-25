@@ -458,6 +458,7 @@ def run(args: argparse.Namespace) -> None:
     finally:
         conn.close()
 
+    manifest_rules = rules  # zachowaj oddzielnie do fallbacku
     if include_derived and derived_rules:
         console.print(
             f"  Reguły IDB: [bold]{len(rules)}[/bold] manifest + "
@@ -483,8 +484,21 @@ def run(args: argparse.Namespace) -> None:
     try:
         ev = Evaluator(rules=rules, facts=edb_facts, conditions=conditions)
     except ValueError as e:
-        console.print(f"[red]Błąd stratyfikacji:[/red] {e}")
-        raise SystemExit(1)
+        if include_derived and derived_rules:
+            console.print(f"  [yellow]Ostrzeżenie stratyfikacji:[/yellow] {e}")
+            console.print(
+                f"  [yellow]Reguły derived ({len(derived_rules)}) powodują konflikt — "
+                f"solver uruchomiony wyłącznie z regułami manifestu ({len(manifest_rules)}).[/yellow]"
+            )
+            rules = manifest_rules
+            try:
+                ev = Evaluator(rules=rules, facts=edb_facts, conditions=conditions)
+            except ValueError as e2:
+                console.print(f"[red]Błąd stratyfikacji (manifest):[/red] {e2}")
+                raise SystemExit(1)
+        else:
+            console.print(f"[red]Błąd stratyfikacji:[/red] {e}")
+            raise SystemExit(1)
 
     if getattr(args, "show_strata", False):
         _show_strata(ev.strata)
@@ -515,9 +529,15 @@ def run(args: argparse.Namespace) -> None:
     else:
         _show_derived_facts(all_facts, edb_facts)
 
+    # ── Opcjonalny wydruk Horn ─────────────────────────────────────────────
+
+    if getattr(args, "print_horn", False):
+        from pn2.commands.solve import _print_horn
+        _print_horn(rules, edb_facts, all_facts)
+
     # ── Faza 3: Interpretacja wyników ──────────────────────────────────────
 
-    if getattr(args, "no_interpret", False):
+    if getattr(args, "no_interpret", False) or getattr(args, "print_horn", False):
         return
 
     console.print(f"\n[bold cyan]Faza 3:[/bold cyan] Interpretacja wyników")
@@ -668,5 +688,14 @@ Przykłady:
         action="store_true",
         dest="include_derived",
         help="Uwzględnij reguły z tabeli derived_rule (odkryte automatycznie) obok reguł manifestu.",
+    )
+    p.add_argument(
+        "--print-horn",
+        action="store_true",
+        dest="print_horn",
+        help=(
+            "Wydrukuj pełne rozumowanie jako klauzule Horna (EDB + reguły + fakty pochodne) "
+            "i pomiń fazę 3 (interpretację Gemini)."
+        ),
     )
     p.set_defaults(func=run)
