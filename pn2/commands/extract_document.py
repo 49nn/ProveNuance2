@@ -95,8 +95,7 @@ def _extract_span(
         return None
 
     if show_prompt:
-        console.print(f"    [dim]--- PROMPT ---[/dim]")
-        console.print(prompt[:500] + "…")
+        print(prompt)
 
     try:
         raw = call_gemini(prompt, model=model)
@@ -129,13 +128,14 @@ def _extract_span(
 def _save_result(result: dict, domain: str) -> dict[str, int]:
     """Zapisuje wszystkie dane z jednego wyniku ekstrakcji. Zwraca liczniki."""
     from llm_query import (
-        collect_rules,    upsert_rules,
-        collect_conditions, upsert_conditions,
-        collect_constants,  upsert_constants,
-        collect_assumptions, upsert_assumptions,
+        collect_rules,              upsert_rules,
+        collect_conditions,         upsert_conditions,
+        collect_constants,          upsert_constants,
+        collect_assumptions,        upsert_assumptions,
+        collect_derived_predicates, upsert_derived_predicates,
     )
 
-    counts = {"rules": 0, "conditions": 0, "constants": 0, "assumptions": 0}
+    counts = {"rules": 0, "conditions": 0, "constants": 0, "assumptions": 0, "derived_predicates": 0}
 
     try:
         conn = get_connection()
@@ -147,6 +147,10 @@ def _save_result(result: dict, domain: str) -> dict[str, int]:
         rules = collect_rules(result)
         if rules:
             counts["rules"] = upsert_rules(conn, rules, domain)
+
+        derived = collect_derived_predicates(rules)
+        if derived:
+            counts["derived_predicates"] = upsert_derived_predicates(conn, derived, domain)
 
         conds = collect_conditions(result)
         if conds:
@@ -229,7 +233,7 @@ def run(args: argparse.Namespace) -> None:
         return
 
     # Ekstrakcja
-    total_counts: dict[str, int] = {"rules": 0, "conditions": 0, "constants": 0, "assumptions": 0}
+    total_counts: dict[str, int] = {"rules": 0, "conditions": 0, "constants": 0, "assumptions": 0, "derived_predicates": 0}
     errors = 0
 
     for i, span in enumerate(spans, 1):
@@ -253,10 +257,11 @@ def run(args: argparse.Namespace) -> None:
                 total_counts[k] += v
 
             parts = []
-            if counts["rules"]:      parts.append(f"[green]{counts['rules']} reguł[/green]")
-            if counts["conditions"]: parts.append(f"[cyan]{counts['conditions']} warunków[/cyan]")
-            if counts["constants"]:  parts.append(f"[yellow]{counts['constants']} stałych[/yellow]")
-            if counts["assumptions"]:parts.append(f"[magenta]{counts['assumptions']} założeń[/magenta]")
+            if counts["rules"]:               parts.append(f"[green]{counts['rules']} reguł[/green]")
+            if counts["derived_predicates"]:  parts.append(f"[green]{counts['derived_predicates']} pred.pochodnych[/green]")
+            if counts["conditions"]:          parts.append(f"[cyan]{counts['conditions']} warunków[/cyan]")
+            if counts["constants"]:           parts.append(f"[yellow]{counts['constants']} stałych[/yellow]")
+            if counts["assumptions"]:         parts.append(f"[magenta]{counts['assumptions']} założeń[/magenta]")
             console.print("    → " + (", ".join(parts) if parts else "[dim]brak wyników[/dim]"))
 
         # Opóźnienie między wywołaniami (rate limiting)
@@ -269,6 +274,7 @@ def run(args: argparse.Namespace) -> None:
     console.print(
         f"{status} — łącznie: "
         f"{total_counts['rules']} reguł, "
+        f"{total_counts['derived_predicates']} pred.pochodnych, "
         f"{total_counts['conditions']} warunków, "
         f"{total_counts['constants']} stałych, "
         f"{total_counts['assumptions']} założeń"

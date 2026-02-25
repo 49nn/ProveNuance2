@@ -99,6 +99,14 @@ def _reset_assumptions(cur) -> None:
         _skipped("assumption")
 
 
+def _reset_derived_predicates(cur) -> None:
+    if _table_exists(cur, "derived_predicate"):
+        cur.execute("DELETE FROM derived_predicate")
+        _deleted(cur.rowcount, "derived_predicate")
+    else:
+        _skipped("derived_predicate")
+
+
 # ---------------------------------------------------------------------------
 # Główna logika
 # ---------------------------------------------------------------------------
@@ -131,9 +139,12 @@ def run(args: argparse.Namespace) -> None:
             _reset_constants(cur)
         elif cel == "assumptions":
             _reset_assumptions(cur)
+        elif cel == "derived-predicates":
+            _reset_derived_predicates(cur)
         elif cel == "all":
             _reset_doc(cur, doc_id)
             _reset_predicates(cur)
+            _reset_derived_predicates(cur)
             _reset_rules(cur)
             _reset_conditions(cur)
             _reset_constants(cur)
@@ -155,19 +166,21 @@ def add_parser(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[
 Usuwa dane z bazy ProveNuance2. Działa natychmiast, bez pytania o potwierdzenie.
 
 Cele:
-  doc          Usuwa spany dokumentów (document_span).
-               Opcja --doc-id ogranicza usuwanie do jednego dokumentu.
-  predicates   Czyści predykaty i manifest_policy.
-  rules        Czyści reguły (gdy tabela istnieje).
-  conditions   Czyści warunki (gdy tabela istnieje).
-  constants    Czyści stałe domenowe (gdy tabela istnieje).
-  assumptions  Czyści założenia scoped (gdy tabela istnieje).
-  all          Wykonuje wszystkie powyższe.
+  doc                  Usuwa spany dokumentów (document_span).
+                       Opcja --doc-id ogranicza usuwanie do jednego dokumentu.
+  predicates           Czyści predykaty i manifest_policy.
+  derived-predicates   Czyści predykaty pochodne (derived_predicate).
+  rules                Czyści reguły (gdy tabela istnieje).
+  conditions           Czyści warunki (gdy tabela istnieje).
+  constants            Czyści stałe domenowe (gdy tabela istnieje).
+  assumptions          Czyści założenia scoped (gdy tabela istnieje).
+  all                  Wykonuje wszystkie powyższe.
 
 Przykłady:
   pn2 reset doc
   pn2 reset doc --doc-id Regulamin
   pn2 reset predicates
+  pn2 reset derived-predicates
   pn2 reset all
   pn2 reset all --doc-id Regulamin
         """,
@@ -175,8 +188,8 @@ Przykłady:
     p.add_argument(
         "cel",
         metavar="CEL",
-        choices=["doc", "predicates", "rules", "conditions", "constants", "assumptions", "all"],
-        help="Co usunąć: doc | predicates | rules | conditions | constants | assumptions | all",
+        choices=["doc", "predicates", "derived-predicates", "rules", "conditions", "constants", "assumptions", "all"],
+        help="Co usunąć: doc | predicates | derived-predicates | rules | conditions | constants | assumptions | all",
     )
     p.add_argument(
         "--doc-id",

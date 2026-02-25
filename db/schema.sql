@@ -15,8 +15,13 @@ END $$;
 
 DO $$ BEGIN
     CREATE TYPE predicate_kind AS ENUM (
-        'domain', 'condition', 'decision', 'ui', 'audit', 'builtin'
+        'domain', 'condition', 'decision', 'ui', 'audit', 'builtin', 'auto_discovered'
     );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TYPE predicate_kind ADD VALUE 'auto_discovered';
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -234,3 +239,53 @@ CREATE INDEX IF NOT EXISTS idx_rule_fragment  ON rule (fragment_id);
 CREATE INDEX IF NOT EXISTS idx_rule_head_pred ON rule (head_pred);
 CREATE INDEX IF NOT EXISTS idx_rule_domain    ON rule (domain);
 CREATE INDEX IF NOT EXISTS idx_rule_body_gin  ON rule USING gin (body);
+
+-- ---------------------------------------------------------------------------
+-- derived_predicate
+-- Predykaty wywiedziane automatycznie z głów reguł Horn odkrytych przez ekstraktor.
+--
+-- io   = 'derived'         (zawsze — constraint wymuszony)
+-- kind = 'auto_discovered' (zawsze — constraint wymuszony)
+-- meaning_pl               = wygenerowany opis (head_pred + rule_id + prov_quote)
+-- source_fragment_id       = fragment, z którego pochodzi pierwsze odkrycie
+--
+-- Unikalność: pred (name/arity).
+-- Re-ekstrakcja tego samego predykatu → DO UPDATE (zachowuje opis jeśli już istnieje).
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS derived_predicate (
+    name                        text            PRIMARY KEY,
+    arity                       integer         NOT NULL,
+    pred                        text            NOT NULL UNIQUE,
+    signature                   text[]          NOT NULL,
+    io                          predicate_io    NOT NULL DEFAULT 'derived',
+    kind                        predicate_kind  NOT NULL DEFAULT 'auto_discovered',
+    meaning_pl                  text,
+    domain                      text            NOT NULL DEFAULT 'generic',
+    source_fragment_id          text            NOT NULL,
+
+    -- AllowedIn (embedded)
+    allowed_in_head             boolean         NOT NULL DEFAULT true,
+    allowed_in_body             boolean         NOT NULL DEFAULT true,
+    allowed_in_negated_body     boolean         NOT NULL DEFAULT false,
+
+    -- ValueDomain (embedded, nullable)
+    value_domain_enum_arg_index integer,
+    value_domain_allowed_values text[],
+
+    notes                       text,
+
+    CONSTRAINT derived_arity_range
+        CHECK (arity BETWEEN 1 AND 16),
+    CONSTRAINT derived_signature_length_matches_arity
+        CHECK (cardinality(signature) = arity),
+    CONSTRAINT derived_io_must_be_derived
+        CHECK (io = 'derived'),
+    CONSTRAINT derived_kind_must_be_auto_discovered
+        CHECK (kind = 'auto_discovered'),
+    CONSTRAINT derived_domain_valid
+        CHECK (domain IN ('generic', 'e-commerce', 'event'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_derived_predicate_domain   ON derived_predicate (domain);
+CREATE INDEX IF NOT EXISTS idx_derived_predicate_fragment ON derived_predicate (source_fragment_id);

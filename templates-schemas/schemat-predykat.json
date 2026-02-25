@@ -74,7 +74,7 @@
     },
     "PredicateKind": {
       "type": "string",
-      "enum": ["domain", "condition", "decision", "ui", "audit", "builtin"],
+      "enum": ["domain", "condition", "decision", "ui", "audit", "builtin", "auto_discovered"],
       "description": "domain: business facts; condition: meets_condition-like; decision: approvals/denials; ui: visibility/availability; audit: violates etc; builtin: comparisons."
     },
     "PredicateSpec": {

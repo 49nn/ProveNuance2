@@ -29,6 +29,7 @@ from .constants import collect_constants, upsert_constants
 from .assumptions import collect_assumptions, upsert_assumptions
 from .rules import collect_rules, upsert_rules
 from .conditions_store import collect_conditions, upsert_conditions
+from .derived_predicates import collect_derived_predicates, upsert_derived_predicates
 
 __all__ = [
     "build_prompt",
@@ -46,4 +47,6 @@ __all__ = [
     "upsert_rules",
     "collect_conditions",
     "upsert_conditions",
+    "collect_derived_predicates",
+    "upsert_derived_predicates",
 ]

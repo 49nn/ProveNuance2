@@ -15,6 +15,37 @@ ROOT        = pathlib.Path(__file__).resolve().parent.parent.parent
 SCHEMA_PATH = ROOT / "db" / "schema.sql"
 
 
+def _split_statements(sql: str) -> list[str]:
+    """
+    Dzieli SQL na pojedyncze instrukcje, respektując bloki $$...$$
+    (dollar-quoting używane w DO $$ BEGIN ... END $$).
+
+    Każda instrukcja kończy się średnikiem na końcu linii (poza blokami $$).
+    Puste wyniki są pomijane.
+    """
+    stmts: list[str] = []
+    buf:   list[str] = []
+    in_dollar = False
+
+    for line in sql.splitlines(keepends=True):
+        buf.append(line)
+        # Każde wystąpienie $$ przełącza tryb dollar-quote
+        if line.count("$$") % 2 == 1:
+            in_dollar = not in_dollar
+        # Koniec instrukcji: linia kończy się ; i nie jesteśmy w bloku $$
+        if not in_dollar and line.rstrip().endswith(";"):
+            stmt = "".join(buf).strip()
+            if stmt:
+                stmts.append(stmt)
+            buf = []
+
+    remaining = "".join(buf).strip()
+    if remaining:
+        stmts.append(remaining)
+
+    return stmts
+
+
 def run(args: argparse.Namespace) -> None:
     if not SCHEMA_PATH.exists():
         console.print(f"[red]Brak pliku schematu:[/red] {SCHEMA_PATH}")
@@ -28,12 +59,23 @@ def run(args: argparse.Namespace) -> None:
         console.print(f"[red]Błąd połączenia z bazą:[/red] {e}")
         raise SystemExit(1)
 
-    with conn, conn.cursor() as cur:
-        cur.execute(sql)
+    # autocommit=True + wykonywanie instrukcji jedna po drugiej jest wymagane,
+    # bo ALTER TYPE ADD VALUE musi być zatwierdzone (własna transakcja) zanim
+    # nowa wartość enuma pojawi się w CREATE TABLE w kolejnej instrukcji.
+    # Cały schema.sql jest idempotentny (IF NOT EXISTS / EXCEPTION WHEN).
+    conn.autocommit = True
+    stmts = _split_statements(sql)
+    try:
+        with conn.cursor() as cur:
+            for stmt in stmts:
+                cur.execute(stmt)
+    except Exception as e:
+        console.print(f"[red]Błąd wykonania schematu:[/red] {e}")
+        conn.close()
+        raise SystemExit(1)
 
-    conn.commit()
     conn.close()
-    console.print(f"[green]Schemat zastosowany:[/green] {SCHEMA_PATH}")
+    console.print(f"[green]Schemat zastosowany:[/green] {SCHEMA_PATH} ({len(stmts)} instrukcji)")
     console.print("[dim]Gotowe.[/dim]")
 
 

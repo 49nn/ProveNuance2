@@ -20,6 +20,8 @@ from llm_query import (
     upsert_rules,
     collect_conditions,
     upsert_conditions,
+    collect_derived_predicates,
+    upsert_derived_predicates,
     DEFAULT_MODEL,
 )
 from pn2._db import get_connection
@@ -67,9 +69,7 @@ def run(args: argparse.Namespace) -> None:
         raise SystemExit(1)
 
     if args.show_prompt:
-        print("=== PROMPT ===")
         print(prompt)
-        print("=== KONIEC PROMPTU ===\n")
 
     print(f"Wysyłam do Gemini ({args.model})...", file=sys.stderr)
 
@@ -100,6 +100,16 @@ def run(args: argparse.Namespace) -> None:
     rules = collect_rules(result)
     print(f"  reguły ({len(rules)}): {', '.join(r['rule_id'] for r in rules)}", file=sys.stderr)
     _save("reguł", rules, upsert_rules, get_connection, domain)
+
+    # --- predykaty pochodne (głowy reguł) ---
+    derived_preds = collect_derived_predicates(rules)
+    if derived_preds:
+        print(
+            f"  predykaty pochodne ({len(derived_preds)}): "
+            f"{', '.join(p['pred'] for p in derived_preds)}",
+            file=sys.stderr,
+        )
+    _save("predykatów pochodnych", derived_preds, upsert_derived_predicates, get_connection, domain)
 
     # --- warunki ---
     conds = collect_conditions(result)
@@ -150,10 +160,11 @@ def add_parser(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[
 Buduje prompt (jak pn2 prompt) i wysyła go do Gemini API.
 Wynik (JSON z regułami Horn) trafia na stdout lub do pliku.
 Po ekstrakcji automatycznie zapisuje do bazy:
-  - reguły Horn       → tabela rule
-  - warunki nazwane   → tabela condition
-  - stałe domenowe    → tabela constant
-  - założenia scoped  → tabela assumption
+  - reguły Horn            → tabela rule
+  - predykaty pochodne     → tabela derived_predicate
+  - warunki nazwane        → tabela condition
+  - stałe domenowe         → tabela constant
+  - założenia scoped       → tabela assumption
 
 Wymaga zmiennej środowiskowej GEMINI_API_KEY (lub pliku .env).
 

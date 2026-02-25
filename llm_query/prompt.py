@@ -30,21 +30,33 @@ def fetch_predicates(domain: str) -> list[str]:
     Zwraca listę pred (name/arity) dla danej domeny.
     Zawsze dołączane: predykaty domain='generic' (w tym builtin).
     Dodatkowo: predykaty domain=<domain> (jeśli różny od 'generic').
+    Zawiera UNION z derived_predicate — predykaty odkryte automatycznie
+    przez ekstraktor są widoczne w kolejnych ekstrakcjach.
     """
     conn = get_connection()
     with conn, conn.cursor() as cur:
         if domain == "generic":
             cur.execute(
-                "SELECT pred FROM predicate WHERE domain = 'generic' ORDER BY kind, name"
+                """
+                SELECT pred FROM predicate
+                WHERE domain = 'generic'
+                UNION
+                SELECT pred FROM derived_predicate
+                WHERE domain = 'generic'
+                ORDER BY pred
+                """
             )
         else:
             cur.execute(
                 """
                 SELECT pred FROM predicate
                 WHERE domain = 'generic' OR domain = %s
-                ORDER BY kind, name
+                UNION
+                SELECT pred FROM derived_predicate
+                WHERE domain = 'generic' OR domain = %s
+                ORDER BY pred
                 """,
-                (domain,),
+                (domain, domain),
             )
         return [row[0] for row in cur.fetchall()]
 

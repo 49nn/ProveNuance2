@@ -352,12 +352,7 @@ def run(args: argparse.Namespace) -> None:
         raise SystemExit(1)
 
     if args.show_prompt:
-        console.print(Panel(
-            extraction_prompt[:1000] + ("…" if len(extraction_prompt) > 1000 else ""),
-            title="Prompt ekstrakcji faktów",
-            border_style="blue",
-            expand=False,
-        ))
+        print(extraction_prompt)
 
     console.print(f"  Wysyłam do Gemini ([dim]{extract_model}[/dim])…")
     try:
@@ -536,12 +531,7 @@ def run(args: argparse.Namespace) -> None:
         return
 
     if args.show_prompt:
-        console.print(Panel(
-            interp_prompt[:1000] + ("…" if len(interp_prompt) > 1000 else ""),
-            title="Prompt interpretacji",
-            border_style="blue",
-            expand=False,
-        ))
+        print(interp_prompt)
 
     console.print(f"  Wysyłam do Gemini ([dim]{interpret_model}[/dim])…")
     try:

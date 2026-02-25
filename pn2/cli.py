@@ -5,20 +5,21 @@ Użycie:
   pn2 <komenda> [opcje]
 
 Komendy:
-  predicates   Listuje predykaty z bazy danych.
-  ingest       Parsuje PDF na spany sekcji i zapisuje do JSON / bazy.
-  reset        Usuwa dane z bazy (doc / predicates / rules / conditions / all).
-  prompt       Generuje wypełniony prompt dla ekstraktora reguł Horn.
-  extract      Wysyła fragment regulaminu do Gemini i zwraca reguły Horn.
-  constants    Listuje stałe domenowe odkryte przez ekstraktor.
-  assumptions  Listuje założenia (ScopedAssumptions) odkryte przez ekstraktor.
-  rules        Listuje reguły Horna odkryte przez ekstraktor.
-  conditions   Listuje warunki nazwane (ConditionDefinition) odkryte przez ekstraktor.
-  load-manifest Ładuje manifest predykatów (JSON) do tabeli predicate.
-  apply-schema  Aplikuje db/schema.sql do bazy danych (idempotentne).
-  solve         Uruchamia solver Datalog na regułach z bazy i faktach z JSON.
-  extract-document  Ekstrakcja reguł dla wszystkich spanów dokumentu (batch).
-  nlp-solve     Ekstrakcja faktów z tekstu NL, solver Datalog i interpretacja wyników.
+  predicates          Listuje predykaty z bazy danych.
+  derived-predicates  Listuje predykaty pochodne odkryte automatycznie przez ekstraktor.
+  ingest              Parsuje PDF na spany sekcji i zapisuje do JSON / bazy.
+  reset               Usuwa dane z bazy (doc / predicates / derived-predicates / rules / conditions / all).
+  prompt              Generuje wypełniony prompt dla ekstraktora reguł Horn.
+  extract             Wysyła fragment regulaminu do Gemini i zwraca reguły Horn.
+  constants           Listuje stałe domenowe odkryte przez ekstraktor.
+  assumptions         Listuje założenia (ScopedAssumptions) odkryte przez ekstraktor.
+  rules               Listuje reguły Horna odkryte przez ekstraktor.
+  conditions          Listuje warunki nazwane (ConditionDefinition) odkryte przez ekstraktor.
+  load-manifest       Ładuje manifest predykatów (JSON) do tabeli predicate.
+  apply-schema        Aplikuje db/schema.sql do bazy danych (idempotentne).
+  solve               Uruchamia solver Datalog na regułach z bazy i faktach z JSON.
+  extract-document    Ekstrakcja reguł dla wszystkich spanów dokumentu (batch).
+  nlp-solve           Ekstrakcja faktów z tekstu NL, solver Datalog i interpretacja wyników.
 """
 
 from __future__ import annotations
@@ -47,6 +48,7 @@ from pn2.commands import apply_schema as cmd_apply_schema
 from pn2.commands import solve as cmd_solve
 from pn2.commands import extract_document as cmd_extract_document
 from pn2.commands import nlp_solve as cmd_nlp_solve
+from pn2.commands import derived_predicates as cmd_derived_predicates
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -67,6 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.required = True
 
     cmd_predicates.add_parser(subparsers)
+    cmd_derived_predicates.add_parser(subparsers)
     cmd_ingest.add_parser(subparsers)
     cmd_reset.add_parser(subparsers)
     cmd_prompt.add_parser(subparsers)
