@@ -7,7 +7,9 @@ Użycie:
 Komendy:
   predicates          Listuje predykaty z bazy danych.
   derived-predicates  Listuje predykaty pochodne odkryte automatycznie przez ekstraktor.
+  derived-rules       Listuje reguły pochodne odkryte automatycznie przez ekstraktor.
   ingest              Parsuje PDF na spany sekcji i zapisuje do JSON / bazy.
+  ingest-url          Pobiera stronę HTML i parsuje ją na spany sekcji.
   reset               Usuwa dane z bazy (doc / predicates / derived-predicates / rules / conditions / all).
   prompt              Generuje wypełniony prompt dla ekstraktora reguł Horn.
   extract             Wysyła fragment regulaminu do Gemini i zwraca reguły Horn.
@@ -36,6 +38,7 @@ if hasattr(sys.stderr, "reconfigure"):
 
 from pn2.commands import predicates as cmd_predicates
 from pn2.commands import ingest as cmd_ingest
+from pn2.commands import ingest_url as cmd_ingest_url
 from pn2.commands import reset as cmd_reset
 from pn2.commands import prompt as cmd_prompt
 from pn2.commands import extract as cmd_extract
@@ -49,6 +52,7 @@ from pn2.commands import solve as cmd_solve
 from pn2.commands import extract_document as cmd_extract_document
 from pn2.commands import nlp_solve as cmd_nlp_solve
 from pn2.commands import derived_predicates as cmd_derived_predicates
+from pn2.commands import derived_rules as cmd_derived_rules
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -70,7 +74,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     cmd_predicates.add_parser(subparsers)
     cmd_derived_predicates.add_parser(subparsers)
+    cmd_derived_rules.add_parser(subparsers)
     cmd_ingest.add_parser(subparsers)
+    cmd_ingest_url.add_parser(subparsers)
     cmd_reset.add_parser(subparsers)
     cmd_prompt.add_parser(subparsers)
     cmd_extract.add_parser(subparsers)

@@ -69,24 +69,15 @@ def _atom_from_dict(d: dict) -> Atom:
     )
 
 
-def load_rules_from_db(
+def _load_rules_from_table(
     conn,
+    table:       str,
     domain:      Optional[str] = None,
     fragment_id: Optional[str] = None,
 ) -> list[Rule]:
-    """
-    Ładuje reguły Horna z tabeli rule.
-
-    Args:
-        conn:        otwarte połączenie psycopg2
-        domain:      opcjonalny filtr po domenie
-        fragment_id: opcjonalny filtr po fragment_id
-
-    Returns:
-        Lista obiektów Rule.
-    """
-    wheres:  list[str] = []
-    params:  list      = []
+    """Ładuje reguły Horna z podanej tabeli (rule lub derived_rule)."""
+    wheres: list[str] = []
+    params: list      = []
 
     if domain:
         wheres.append("domain = %s")
@@ -96,7 +87,10 @@ def load_rules_from_db(
         params.append(fragment_id)
 
     where = ("WHERE " + " AND ".join(wheres)) if wheres else ""
-    sql   = f"SELECT rule_id, fragment_id, head_pred, head_args, body, prov_unit, prov_quote FROM rule {where} ORDER BY id"
+    sql   = (
+        f"SELECT rule_id, fragment_id, head_pred, head_args, body, prov_unit, prov_quote "
+        f"FROM {table} {where} ORDER BY id"
+    )
 
     with conn.cursor() as cur:
         cur.execute(sql, params)
@@ -104,7 +98,6 @@ def load_rules_from_db(
 
     rules: list[Rule] = []
     for rule_id, frag_id, head_pred, head_args_raw, body_raw, prov_unit_raw, prov_quote_raw in rows:
-        # psycopg2 zwraca JSONB jako obiekty Python; fallback na json.loads dla str
         if isinstance(head_args_raw, str):
             head_args_list = json.loads(head_args_raw)
         else:
@@ -115,7 +108,6 @@ def load_rules_from_db(
         else:
             body_list = body_raw or []
 
-        # prov_unit to text[] — psycopg2 zwraca list; fallback na pustą listę
         prov_unit: list[str] = list(prov_unit_raw) if prov_unit_raw else []
         prov_quote: str      = prov_quote_raw or ""
 
@@ -130,6 +122,44 @@ def load_rules_from_db(
         ))
 
     return rules
+
+
+def load_rules_from_db(
+    conn,
+    domain:      Optional[str] = None,
+    fragment_id: Optional[str] = None,
+) -> list[Rule]:
+    """
+    Ładuje reguły Horna z tabeli rule (manifest).
+
+    Args:
+        conn:        otwarte połączenie psycopg2
+        domain:      opcjonalny filtr po domenie
+        fragment_id: opcjonalny filtr po fragment_id
+
+    Returns:
+        Lista obiektów Rule.
+    """
+    return _load_rules_from_table(conn, "rule", domain, fragment_id)
+
+
+def load_derived_rules_from_db(
+    conn,
+    domain:      Optional[str] = None,
+    fragment_id: Optional[str] = None,
+) -> list[Rule]:
+    """
+    Ładuje reguły Horna z tabeli derived_rule (odkryte automatycznie przez ekstraktor).
+
+    Args:
+        conn:        otwarte połączenie psycopg2
+        domain:      opcjonalny filtr po domenie
+        fragment_id: opcjonalny filtr po fragment_id
+
+    Returns:
+        Lista obiektów Rule.
+    """
+    return _load_rules_from_table(conn, "derived_rule", domain, fragment_id)
 
 
 # ---------------------------------------------------------------------------

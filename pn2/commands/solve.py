@@ -88,6 +88,7 @@ def run(args: argparse.Namespace) -> None:
         Evaluator,
         load_facts_json,
         load_rules_from_db,
+        load_derived_rules_from_db,
         load_conditions_from_db,
         parse_goal,
     )
@@ -121,9 +122,14 @@ def run(args: argparse.Namespace) -> None:
         raise SystemExit(1)
 
     fragment = args.fragment or None
+    include_derived: bool = getattr(args, "include_derived", False)
     try:
         rules      = load_rules_from_db(conn, domain=domain, fragment_id=fragment)
         conditions = load_conditions_from_db(conn)
+        if include_derived:
+            derived_rules = load_derived_rules_from_db(conn, domain=domain, fragment_id=fragment)
+        else:
+            derived_rules = []
     except Exception as e:
         console.print(f"[red]Błąd ładowania z bazy:[/red] {e}")
         conn.close()
@@ -131,12 +137,22 @@ def run(args: argparse.Namespace) -> None:
     finally:
         conn.close()
 
-    console.print(
-        f"Reguły IDB:  [bold]{len(rules)}[/bold]  "
-        f"(domena={domain}"
-        + (f", fragment={fragment}" if fragment else "")
-        + f")   Warunki: [bold]{len(conditions)}[/bold]"
-    )
+    if include_derived and derived_rules:
+        console.print(
+            f"Reguły IDB:  [bold]{len(rules)}[/bold] manifest + "
+            f"[bold]{len(derived_rules)}[/bold] derived  "
+            f"(domena={domain}"
+            + (f", fragment={fragment}" if fragment else "")
+            + f")   Warunki: [bold]{len(conditions)}[/bold]"
+        )
+        rules = rules + derived_rules
+    else:
+        console.print(
+            f"Reguły IDB:  [bold]{len(rules)}[/bold]  "
+            f"(domena={domain}"
+            + (f", fragment={fragment}" if fragment else "")
+            + f")   Warunki: [bold]{len(conditions)}[/bold]"
+        )
 
     if not rules:
         console.print("[yellow]Brak reguł — solver nie ma co obliczać.[/yellow]")
@@ -242,5 +258,11 @@ Przykłady:
         "--show-derived",
         action="store_true",
         help="Zawsze wyświetl wszystkie fakty pochodne (IDB), nawet gdy podano --goal.",
+    )
+    p.add_argument(
+        "--include-derived",
+        action="store_true",
+        dest="include_derived",
+        help="Uwzględnij reguły z tabeli derived_rule (odkryte automatycznie) obok reguł manifestu.",
     )
     p.set_defaults(func=run)
